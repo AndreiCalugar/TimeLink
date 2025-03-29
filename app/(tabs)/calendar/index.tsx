@@ -17,6 +17,7 @@ import {
   eachDayOfInterval,
   addDays,
 } from "date-fns";
+import EventCard from "@/components/calendar/EventCard";
 
 // Define type for calendar view
 type CalendarViewType = "day" | "week" | "month";
@@ -134,7 +135,21 @@ export default function CalendarScreen() {
           {formattedDate}
         </Text>
 
-        {renderEventsList(selectedDateEvents)}
+        {selectedDateEvents.length > 0 ? (
+          selectedDateEvents.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              onPress={handleEventPress}
+            />
+          ))
+        ) : (
+          <Text
+            style={[styles.noEvents, { color: theme.colors.onSurfaceVariant }]}
+          >
+            No events scheduled for this day
+          </Text>
+        )}
       </View>
     );
   };
@@ -170,38 +185,12 @@ export default function CalendarScreen() {
               <View style={styles.weekDayEvents}>
                 {dayEvents.length > 0 ? (
                   dayEvents.map((event) => (
-                    <TouchableOpacity
+                    <EventCard
                       key={event.id}
-                      style={[
-                        styles.weekEventCard,
-                        {
-                          backgroundColor: theme.colors.surface,
-                          borderLeftColor: event.color || theme.colors.primary,
-                        },
-                        event.isDeadTime && styles.deadTimeCard,
-                      ]}
-                      onPress={() => handleEventPress(event.id)}
-                    >
-                      <Text
-                        style={[
-                          styles.eventTitle,
-                          { color: theme.colors.onSurface },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {event.title}
-                      </Text>
-                      {(event.startTime || event.endTime) && (
-                        <Text
-                          style={[
-                            styles.eventTime,
-                            { color: theme.colors.onSurfaceVariant },
-                          ]}
-                        >
-                          {event.startTime} - {event.endTime}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
+                      event={event}
+                      onPress={handleEventPress}
+                      compact={true}
+                    />
                   ))
                 ) : (
                   <Text
@@ -253,74 +242,26 @@ export default function CalendarScreen() {
             Events for {format(new Date(selectedDate), "MMMM d, yyyy")}
           </Text>
 
-          {renderEventsList(selectedDateEvents)}
+          {selectedDateEvents.length > 0 ? (
+            selectedDateEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onPress={handleEventPress}
+              />
+            ))
+          ) : (
+            <Text
+              style={[
+                styles.noEvents,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
+            >
+              No events scheduled for this day
+            </Text>
+          )}
         </View>
       </>
-    );
-  };
-
-  // Helper function to render events list
-  const renderEventsList = (events: CalendarEvent[]) => {
-    return events.length > 0 ? (
-      events.map((event) => (
-        <TouchableOpacity
-          key={event.id}
-          style={[
-            styles.eventCard,
-            {
-              backgroundColor: theme.colors.surface,
-              borderLeftColor: event.color || theme.colors.primary,
-            },
-            event.isDeadTime && styles.deadTimeCard,
-          ]}
-          onPress={() => handleEventPress(event.id)}
-        >
-          <View style={styles.eventHeader}>
-            <Text
-              style={[styles.eventTitle, { color: theme.colors.onSurface }]}
-            >
-              {event.title}
-            </Text>
-            <Text
-              style={[
-                styles.eventVisibility,
-                { color: theme.colors.onSurfaceVariant },
-              ]}
-            >
-              {event.visibility}
-            </Text>
-          </View>
-          {(event.startTime || event.endTime) && (
-            <Text
-              style={[
-                styles.eventTime,
-                { color: theme.colors.onSurfaceVariant },
-              ]}
-            >
-              {event.startTime} - {event.endTime}
-            </Text>
-          )}
-          {event.location && (
-            <Text
-              style={[
-                styles.eventLocation,
-                { color: theme.colors.onSurfaceVariant },
-              ]}
-            >
-              {event.location}
-            </Text>
-          )}
-          {event.isDeadTime && (
-            <Text style={[styles.deadTimeLabel, { color: theme.colors.error }]}>
-              Dead Time
-            </Text>
-          )}
-        </TouchableOpacity>
-      ))
-    ) : (
-      <Text style={[styles.noEvents, { color: theme.colors.onSurfaceVariant }]}>
-        No events scheduled for this day
-      </Text>
     );
   };
 
@@ -385,49 +326,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 16,
   },
-  eventCard: {
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  deadTimeCard: {
-    borderStyle: "dashed",
-    borderWidth: 1,
-    borderColor: "#EA4335",
-  },
-  eventHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  eventVisibility: {
-    fontSize: 12,
-    textTransform: "capitalize",
-  },
-  eventTime: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  eventLocation: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  deadTimeLabel: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 4,
-  },
   noEvents: {
     textAlign: "center",
     marginTop: 24,
@@ -474,12 +372,5 @@ const styles = StyleSheet.create({
   },
   weekDayEvents: {
     marginTop: 8,
-  },
-  weekEventCard: {
-    padding: 8,
-    marginBottom: 6,
-    borderRadius: 4,
-    borderLeftWidth: 4,
-    elevation: 1,
   },
 });
