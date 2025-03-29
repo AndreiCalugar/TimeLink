@@ -50,7 +50,7 @@ jest.mock("react-native-paper", () => {
 });
 
 // Mock CalendarContext
-jest.mock("../context/CalendarContext", () => ({
+jest.mock("./context/CalendarContext", () => ({
   useCalendarContext: () => ({
     events: {},
     getEventsByDate: () => [],
@@ -109,6 +109,3 @@ jest.mock("date-fns", () => {
     ]),
   };
 });
-
-// Silence the warning: Animated: `useNativeDriver` is not supported
-jest.mock("react-native/Libraries/Animated/NativeAnimatedHelper");
