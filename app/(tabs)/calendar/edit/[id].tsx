@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView, Platform } from "react-native";
 import {
   TextInput,
@@ -12,34 +12,55 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   useCalendarContext,
   EventVisibility,
-} from "../../../context/CalendarContext";
+} from "../../../../context/CalendarContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, parse } from "date-fns";
 
-export default function CreateEventScreen() {
+export default function EditEventScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const params = useLocalSearchParams();
-  const { createEvent } = useCalendarContext();
+  const { id } = useLocalSearchParams();
+  const { getEventById, updateEvent } = useCalendarContext();
 
-  // Get the date from params or use today
-  const initialDate =
-    (params.date as string) || new Date().toISOString().split("T")[0];
+  // Fetch the event by ID
+  const event = getEventById(id as string);
 
-  // Convert initialDate string to Date object
-  const parsedInitialDate = parse(initialDate, "yyyy-MM-dd", new Date());
+  // If event not found, go back to calendar
+  useEffect(() => {
+    if (!event) {
+      router.back();
+    }
+  }, [event, router]);
+
+  // If event is undefined, show loading or return early
+  if (!event) {
+    return (
+      <View style={styles.container}>
+        <Text>Event not found</Text>
+      </View>
+    );
+  }
+
+  // Parse date and time strings into Date objects
+  const parsedDate = parse(event.date, "yyyy-MM-dd", new Date());
+  const parsedStartTime = event.startTime
+    ? parse(event.startTime, "HH:mm", new Date())
+    : new Date();
+  const parsedEndTime = event.endTime
+    ? parse(event.endTime, "HH:mm", new Date())
+    : new Date(new Date().setHours(new Date().getHours() + 1));
 
   // Event state
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState(parsedInitialDate);
-  const [startTime, setStartTime] = useState(new Date());
-  const [endTime, setEndTime] = useState(
-    new Date(new Date().setHours(new Date().getHours() + 1))
+  const [title, setTitle] = useState(event.title);
+  const [description, setDescription] = useState(event.description || "");
+  const [date, setDate] = useState(parsedDate);
+  const [startTime, setStartTime] = useState(parsedStartTime);
+  const [endTime, setEndTime] = useState(parsedEndTime);
+  const [location, setLocation] = useState(event.location || "");
+  const [visibility, setVisibility] = useState<EventVisibility>(
+    event.visibility
   );
-  const [location, setLocation] = useState("");
-  const [visibility, setVisibility] = useState<EventVisibility>("public");
-  const [isDeadTime, setIsDeadTime] = useState(false);
+  const [isDeadTime, setIsDeadTime] = useState(event.isDeadTime || false);
 
   // State for showing/hiding date and time pickers
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -47,14 +68,14 @@ export default function CreateEventScreen() {
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
   // Handle form submission
-  const handleCreateEvent = async () => {
+  const handleUpdateEvent = async () => {
     // Validate form
     if (!title.trim()) {
       // Show error - title is required
       return;
     }
 
-    await createEvent({
+    await updateEvent(event.id, {
       title,
       description,
       date: format(date, "yyyy-MM-dd"),
@@ -109,7 +130,7 @@ export default function CreateEventScreen() {
   return (
     <ScrollView style={styles.container}>
       <Text variant="headlineMedium" style={styles.title}>
-        Create New Event
+        Edit Event
       </Text>
 
       <TextInput
@@ -284,10 +305,10 @@ export default function CreateEventScreen() {
       <View style={styles.actions}>
         <Button
           mode="contained"
-          onPress={handleCreateEvent}
+          onPress={handleUpdateEvent}
           style={styles.button}
         >
-          Create Event
+          Update Event
         </Button>
 
         <Button
