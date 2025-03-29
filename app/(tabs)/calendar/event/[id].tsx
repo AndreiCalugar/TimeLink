@@ -29,9 +29,17 @@ export default function EventDetailsScreen() {
     );
   }
 
-  // Format date and time with date-fns
-  const eventDate = parse(event.date, "yyyy-MM-dd", new Date());
-  const formattedDate = format(eventDate, "EEEE, MMMM d, yyyy");
+  // Format date with fallback for invalid dates
+  const formatEventDate = () => {
+    try {
+      const eventDate = parse(event.date, "yyyy-MM-dd", new Date());
+      return format(eventDate, "EEEE, MMMM d, yyyy");
+    } catch (error) {
+      return event.date; // Fallback to the original string
+    }
+  };
+
+  const formattedDate = formatEventDate();
 
   // Handle event deletion
   const handleDelete = async () => {

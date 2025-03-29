@@ -106,6 +106,86 @@ export default function CreateEventScreen() {
     }
   };
 
+  // Simplified date picker for web platform
+  const renderDatePicker = () => {
+    if (Platform.OS === "web") {
+      return (
+        <input
+          type="date"
+          value={format(date, "yyyy-MM-dd")}
+          onChange={(e) => {
+            const newDate = e.target.value
+              ? parse(e.target.value, "yyyy-MM-dd", new Date())
+              : new Date();
+            setDate(newDate);
+          }}
+          style={{
+            padding: 10,
+            borderWidth: 1,
+            borderColor: theme.colors.outline,
+            borderRadius: 4,
+            marginTop: 8,
+            width: "100%",
+          }}
+        />
+      );
+    }
+
+    return (
+      showDatePicker && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+        />
+      )
+    );
+  };
+
+  // Simplified time picker for web platform
+  const renderTimePicker = (
+    timeValue: Date,
+    onTimeChange: (event: any, date?: Date) => void,
+    showPicker: boolean
+  ) => {
+    if (Platform.OS === "web") {
+      return (
+        <input
+          type="time"
+          value={format(timeValue, "HH:mm")}
+          onChange={(e) => {
+            if (e.target.value) {
+              const [hours, minutes] = e.target.value.split(":").map(Number);
+              const newTime = new Date(timeValue);
+              newTime.setHours(hours, minutes);
+              onTimeChange({}, newTime);
+            }
+          }}
+          style={{
+            padding: 10,
+            borderWidth: 1,
+            borderColor: theme.colors.outline,
+            borderRadius: 4,
+            marginTop: 8,
+            width: "100%",
+          }}
+        />
+      );
+    }
+
+    return (
+      showPicker && (
+        <DateTimePicker
+          value={timeValue}
+          mode="time"
+          display="default"
+          onChange={onTimeChange}
+        />
+      )
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text variant="headlineMedium" style={styles.title}>
@@ -138,14 +218,7 @@ export default function CreateEventScreen() {
             onPress={() => setShowDatePicker(true)}
           />
         </View>
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={handleDateChange}
-          />
-        )}
+        {renderDatePicker()}
       </View>
 
       {/* Time Pickers */}
@@ -168,13 +241,10 @@ export default function CreateEventScreen() {
               onPress={() => setShowStartTimePicker(true)}
             />
           </View>
-          {showStartTimePicker && (
-            <DateTimePicker
-              value={startTime}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleStartTimeChange}
-            />
+          {renderTimePicker(
+            startTime,
+            handleStartTimeChange,
+            showStartTimePicker
           )}
         </View>
 
@@ -196,14 +266,7 @@ export default function CreateEventScreen() {
               onPress={() => setShowEndTimePicker(true)}
             />
           </View>
-          {showEndTimePicker && (
-            <DateTimePicker
-              value={endTime}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleEndTimeChange}
-            />
-          )}
+          {renderTimePicker(endTime, handleEndTimeChange, showEndTimePicker)}
         </View>
       </View>
 

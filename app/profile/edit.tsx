@@ -38,6 +38,7 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     try {
       setIsLoading(true);
+
       // Update the user profile fields one by one
       if (userProfile) {
         if (name !== userProfile.name) {
@@ -52,6 +53,7 @@ export default function EditProfileScreen() {
           await updateUserField("avatar", profilePicture);
         }
       }
+
       router.back();
     } catch (error) {
       console.error("Failed to update profile:", error);
