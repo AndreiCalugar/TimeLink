@@ -84,7 +84,7 @@ describe("AgendaView Component", () => {
   });
 
   it("renders events grouped by day including past events", () => {
-    const { getByText } = render(
+    const { getByText, getAllByText } = render(
       <AgendaView events={mockEvents} onEventPress={mockOnEventPress} />
     );
 
@@ -98,6 +98,12 @@ describe("AgendaView Component", () => {
     expect(getByText("Client Call")).toBeTruthy();
     expect(getByText("Conference")).toBeTruthy();
     expect(getByText("Past Meeting")).toBeTruthy();
+
+    // Check that past events have a "Past Event" badge
+    expect(getByText("Past Event")).toBeTruthy();
+
+    // Check that past events have a "View details" button
+    expect(getByText("View details")).toBeTruthy();
   });
 
   it("triggers onEventPress when an event is clicked", () => {
@@ -111,6 +117,19 @@ describe("AgendaView Component", () => {
 
     // Check if onEventPress was called with the correct event ID
     expect(mockOnEventPress).toHaveBeenCalledWith("event-1");
+  });
+
+  it("triggers onEventPress when 'View details' button is clicked on past events", () => {
+    const { getByText } = render(
+      <AgendaView events={mockEvents} onEventPress={mockOnEventPress} />
+    );
+
+    // Find and click the View details button for a past event
+    const viewDetailsButton = getByText("View details");
+    fireEvent.press(viewDetailsButton);
+
+    // Check if onEventPress was called with the correct event ID
+    expect(mockOnEventPress).toHaveBeenCalledWith("event-5");
   });
 
   it("displays empty state message when no events", () => {
@@ -157,5 +176,9 @@ describe("AgendaView Component", () => {
 
     // Past events should not be shown
     expect(queryByText("Past Meeting")).toBeNull();
+
+    // Past event UI elements should not be shown
+    expect(queryByText("Past Event")).toBeNull();
+    expect(queryByText("View details")).toBeNull();
   });
 });

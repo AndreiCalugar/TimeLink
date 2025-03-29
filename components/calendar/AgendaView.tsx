@@ -1,6 +1,13 @@
 import React from "react";
 import { StyleSheet, View, ScrollView, SectionList } from "react-native";
-import { Text, Divider, useTheme, Surface } from "react-native-paper";
+import {
+  Text,
+  Divider,
+  useTheme,
+  Surface,
+  Chip,
+  Button,
+} from "react-native-paper";
 import {
   format,
   isToday,
@@ -149,8 +156,29 @@ export default function AgendaView({
               },
             ]}
           >
+            {isPastEvent && (
+              <Chip
+                style={styles.pastEventBadge}
+                textStyle={styles.pastEventBadgeText}
+                mode="outlined"
+              >
+                Past Event
+              </Chip>
+            )}
             <EventCard event={item} onPress={onEventPress} compact={false} />
-            {isPastEvent && <View style={styles.pastEventOverlay} />}
+            {isPastEvent && (
+              <View style={styles.pastEventFooter}>
+                <Button
+                  mode="text"
+                  onPress={() => onEventPress(item.id)}
+                  icon="history"
+                  style={styles.viewDetailsButton}
+                  labelStyle={{ fontSize: 12 }}
+                >
+                  View details
+                </Button>
+              </View>
+            )}
           </Surface>
         );
       }}
@@ -262,7 +290,11 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   pastEventContainer: {
-    opacity: 0.7,
+    opacity: 0.8,
+    borderLeftWidth: 2,
+    borderLeftColor: "#9e9e9e",
+    position: "relative",
+    paddingTop: 24,
   },
   currentEventContainer: {
     marginVertical: 10,
@@ -272,12 +304,24 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: "#3498db",
   },
-  pastEventOverlay: {
+  pastEventBadge: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    top: 8,
+    right: 8,
+    height: 20,
+    backgroundColor: "rgba(158, 158, 158, 0.2)",
+    zIndex: 1,
+  },
+  pastEventBadgeText: {
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  pastEventFooter: {
+    marginTop: -8,
+    paddingBottom: 4,
+    alignItems: "flex-end",
+  },
+  viewDetailsButton: {
+    marginRight: 4,
   },
 });
