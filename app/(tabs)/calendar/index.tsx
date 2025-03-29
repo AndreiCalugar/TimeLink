@@ -18,6 +18,7 @@ import {
   addDays,
 } from "date-fns";
 import EventCard from "@/components/calendar/EventCard";
+import DateNavigator from "@/components/calendar/DateNavigator";
 
 // Define type for calendar view
 type CalendarViewType = "day" | "week" | "month";
@@ -131,9 +132,11 @@ export default function CalendarScreen() {
 
     return (
       <View style={styles.dayViewContainer}>
-        <Text style={[styles.dateTitle, { color: theme.colors.onBackground }]}>
-          {formattedDate}
-        </Text>
+        <DateNavigator
+          date={selectedDate}
+          viewType="day"
+          onDateChange={setSelectedDate}
+        />
 
         {selectedDateEvents.length > 0 ? (
           selectedDateEvents.map((event) => (
@@ -159,54 +162,62 @@ export default function CalendarScreen() {
     const weekDays = getWeekDays();
 
     return (
-      <ScrollView style={styles.weekViewContainer}>
-        {weekDays.map((day) => {
-          const dateString = format(day, "yyyy-MM-dd");
-          const dayEvents = getEventsByDate(dateString);
-          const isSelected = dateString === selectedDate;
-          const dayName = format(day, "EEE");
-          const dayNumber = format(day, "d");
+      <View style={styles.weekViewContainer}>
+        <DateNavigator
+          date={selectedDate}
+          viewType="week"
+          onDateChange={setSelectedDate}
+        />
 
-          return (
-            <View key={dateString} style={styles.weekDayContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.weekDayHeader,
-                  isSelected && {
-                    backgroundColor: theme.colors.primaryContainer,
-                  },
-                ]}
-                onPress={() => setSelectedDate(dateString)}
-              >
-                <Text style={styles.weekDayName}>{dayName}</Text>
-                <Text style={styles.weekDayNumber}>{dayNumber}</Text>
-              </TouchableOpacity>
+        <ScrollView>
+          {weekDays.map((day) => {
+            const dateString = format(day, "yyyy-MM-dd");
+            const dayEvents = getEventsByDate(dateString);
+            const isSelected = dateString === selectedDate;
+            const dayName = format(day, "EEE");
+            const dayNumber = format(day, "d");
 
-              <View style={styles.weekDayEvents}>
-                {dayEvents.length > 0 ? (
-                  dayEvents.map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onPress={handleEventPress}
-                      compact={true}
-                    />
-                  ))
-                ) : (
-                  <Text
-                    style={[
-                      styles.noEventsSmall,
-                      { color: theme.colors.onSurfaceVariant },
-                    ]}
-                  >
-                    No events
-                  </Text>
-                )}
+            return (
+              <View key={dateString} style={styles.weekDayContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.weekDayHeader,
+                    isSelected && {
+                      backgroundColor: theme.colors.primaryContainer,
+                    },
+                  ]}
+                  onPress={() => setSelectedDate(dateString)}
+                >
+                  <Text style={styles.weekDayName}>{dayName}</Text>
+                  <Text style={styles.weekDayNumber}>{dayNumber}</Text>
+                </TouchableOpacity>
+
+                <View style={styles.weekDayEvents}>
+                  {dayEvents.length > 0 ? (
+                    dayEvents.map((event) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        onPress={handleEventPress}
+                        compact={true}
+                      />
+                    ))
+                  ) : (
+                    <Text
+                      style={[
+                        styles.noEventsSmall,
+                        { color: theme.colors.onSurfaceVariant },
+                      ]}
+                    >
+                      No events
+                    </Text>
+                  )}
+                </View>
               </View>
-            </View>
-          );
-        })}
-      </ScrollView>
+            );
+          })}
+        </ScrollView>
+      </View>
     );
   };
 
@@ -347,10 +358,12 @@ const styles = StyleSheet.create({
   dayViewContainer: {
     flex: 1,
     padding: 16,
+    paddingTop: 0,
   },
   // Week view styles
   weekViewContainer: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   weekDayContainer: {
     marginBottom: 16,
