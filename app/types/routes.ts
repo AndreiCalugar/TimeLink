@@ -11,3 +11,6 @@ export type AppRoutes = {
   "/(tabs)/profile/interests": undefined;
   "/(tabs)/profile/interests/[id]": { id: string };
 };
+
+// Add default export to satisfy Expo Router requirements
+export default AppRoutes;
