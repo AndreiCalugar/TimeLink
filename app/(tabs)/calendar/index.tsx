@@ -1,9 +1,27 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
-import { useTheme, FAB } from "react-native-paper";
+import { useTheme, FAB, SegmentedButtons } from "react-native-paper";
 import { useCalendarContext } from "../../../context/CalendarContext";
 import { useRouter } from "expo-router";
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  addDays,
+} from "date-fns";
+import EventCard from "@/components/calendar/EventCard";
+import DateNavigator from "@/components/calendar/DateNavigator";
+
+// Define type for calendar view
+type CalendarViewType = "day" | "week" | "month";
 
 // Define type for event visibility
 type EventVisibility = "public" | "private" | "friends";
@@ -43,6 +61,7 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+  const [viewType, setViewType] = useState<CalendarViewType>("month");
 
   // Prepare the marked dates for the calendar
   const getMarkedDates = (): MarkedDates => {
@@ -98,91 +117,34 @@ export default function CalendarScreen() {
   // Get events for the selected date
   const selectedDateEvents = getEventsByDate(selectedDate);
 
-  return (
-    <View style={styles.container}>
-      <Calendar
-        theme={{
-          backgroundColor: theme.colors.background,
-          calendarBackground: theme.colors.background,
-          textSectionTitleColor: theme.colors.primary,
-          selectedDayBackgroundColor: theme.colors.primary,
-          selectedDayTextColor: theme.colors.onPrimary,
-          todayTextColor: theme.colors.primary,
-          dayTextColor: theme.colors.onBackground,
-          textDisabledColor: theme.colors.outline,
-          dotColor: theme.colors.primary,
-          selectedDotColor: theme.colors.onPrimary,
-          arrowColor: theme.colors.primary,
-          monthTextColor: theme.colors.onBackground,
-          indicatorColor: theme.colors.primary,
-        }}
-        onDayPress={handleDayPress}
-        markedDates={getMarkedDates()}
-        markingType={"multi-dot"}
-      />
+  // Get week days for week view
+  const getWeekDays = () => {
+    const selectedDateObj = new Date(selectedDate);
+    const start = startOfWeek(selectedDateObj, { weekStartsOn: 0 });
+    const end = endOfWeek(selectedDateObj, { weekStartsOn: 0 });
 
-      <View style={styles.eventsContainer}>
-        <Text style={[styles.dateTitle, { color: theme.colors.onBackground }]}>
-          Events for {selectedDate}
-        </Text>
+    return eachDayOfInterval({ start, end });
+  };
+
+  // Render day view
+  const renderDayView = () => {
+    const formattedDate = format(new Date(selectedDate), "EEEE, MMMM d, yyyy");
+
+    return (
+      <View style={styles.dayViewContainer}>
+        <DateNavigator
+          date={selectedDate}
+          viewType="day"
+          onDateChange={setSelectedDate}
+        />
 
         {selectedDateEvents.length > 0 ? (
           selectedDateEvents.map((event) => (
-            <TouchableOpacity
+            <EventCard
               key={event.id}
-              style={[
-                styles.eventCard,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderLeftColor: event.color || theme.colors.primary,
-                },
-                event.isDeadTime && styles.deadTimeCard,
-              ]}
-              onPress={() => handleEventPress(event.id)}
-            >
-              <View style={styles.eventHeader}>
-                <Text
-                  style={[styles.eventTitle, { color: theme.colors.onSurface }]}
-                >
-                  {event.title}
-                </Text>
-                <Text
-                  style={[
-                    styles.eventVisibility,
-                    { color: theme.colors.onSurfaceVariant },
-                  ]}
-                >
-                  {event.visibility}
-                </Text>
-              </View>
-              {(event.startTime || event.endTime) && (
-                <Text
-                  style={[
-                    styles.eventTime,
-                    { color: theme.colors.onSurfaceVariant },
-                  ]}
-                >
-                  {event.startTime} - {event.endTime}
-                </Text>
-              )}
-              {event.location && (
-                <Text
-                  style={[
-                    styles.eventLocation,
-                    { color: theme.colors.onSurfaceVariant },
-                  ]}
-                >
-                  {event.location}
-                </Text>
-              )}
-              {event.isDeadTime && (
-                <Text
-                  style={[styles.deadTimeLabel, { color: theme.colors.error }]}
-                >
-                  Dead Time
-                </Text>
-              )}
-            </TouchableOpacity>
+              event={event}
+              onPress={handleEventPress}
+            />
           ))
         ) : (
           <Text
@@ -192,6 +154,157 @@ export default function CalendarScreen() {
           </Text>
         )}
       </View>
+    );
+  };
+
+  // Render week view
+  const renderWeekView = () => {
+    const weekDays = getWeekDays();
+
+    return (
+      <View style={styles.weekViewContainer}>
+        <DateNavigator
+          date={selectedDate}
+          viewType="week"
+          onDateChange={setSelectedDate}
+        />
+
+        <ScrollView>
+          {weekDays.map((day) => {
+            const dateString = format(day, "yyyy-MM-dd");
+            const dayEvents = getEventsByDate(dateString);
+            const isSelected = dateString === selectedDate;
+            const dayName = format(day, "EEE");
+            const dayNumber = format(day, "d");
+
+            return (
+              <View key={dateString} style={styles.weekDayContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.weekDayHeader,
+                    isSelected && {
+                      backgroundColor: theme.colors.primaryContainer,
+                    },
+                  ]}
+                  onPress={() => setSelectedDate(dateString)}
+                >
+                  <Text style={styles.weekDayName}>{dayName}</Text>
+                  <Text style={styles.weekDayNumber}>{dayNumber}</Text>
+                </TouchableOpacity>
+
+                <View style={styles.weekDayEvents}>
+                  {dayEvents.length > 0 ? (
+                    dayEvents.map((event) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        onPress={handleEventPress}
+                        compact={true}
+                      />
+                    ))
+                  ) : (
+                    <Text
+                      style={[
+                        styles.noEventsSmall,
+                        { color: theme.colors.onSurfaceVariant },
+                      ]}
+                    >
+                      No events
+                    </Text>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  // Render month view (existing calendar)
+  const renderMonthView = () => {
+    return (
+      <>
+        <Calendar
+          theme={{
+            backgroundColor: theme.colors.background,
+            calendarBackground: theme.colors.background,
+            textSectionTitleColor: theme.colors.primary,
+            selectedDayBackgroundColor: theme.colors.primary,
+            selectedDayTextColor: theme.colors.onPrimary,
+            todayTextColor: theme.colors.primary,
+            dayTextColor: theme.colors.onBackground,
+            textDisabledColor: theme.colors.outline,
+            dotColor: theme.colors.primary,
+            selectedDotColor: theme.colors.onPrimary,
+            arrowColor: theme.colors.primary,
+            monthTextColor: theme.colors.onBackground,
+            indicatorColor: theme.colors.primary,
+          }}
+          onDayPress={handleDayPress}
+          markedDates={getMarkedDates()}
+          markingType={"multi-dot"}
+        />
+
+        <View style={styles.eventsContainer}>
+          <Text
+            style={[styles.dateTitle, { color: theme.colors.onBackground }]}
+          >
+            Events for {format(new Date(selectedDate), "MMMM d, yyyy")}
+          </Text>
+
+          {selectedDateEvents.length > 0 ? (
+            selectedDateEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onPress={handleEventPress}
+              />
+            ))
+          ) : (
+            <Text
+              style={[
+                styles.noEvents,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
+            >
+              No events scheduled for this day
+            </Text>
+          )}
+        </View>
+      </>
+    );
+  };
+
+  // Render the selected view
+  const renderCalendarView = () => {
+    switch (viewType) {
+      case "day":
+        return renderDayView();
+      case "week":
+        return renderWeekView();
+      case "month":
+      default:
+        return renderMonthView();
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.viewSwitcherContainer}>
+        <SegmentedButtons
+          value={viewType}
+          onValueChange={(value) => setViewType(value as CalendarViewType)}
+          buttons={[
+            { value: "day", label: "Day" },
+            { value: "week", label: "Week" },
+            { value: "month", label: "Month" },
+          ]}
+          style={styles.viewSwitcher}
+        />
+      </View>
+
+      {renderCalendarView()}
 
       <FAB
         icon="plus"
@@ -208,6 +321,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  viewSwitcherContainer: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  viewSwitcher: {
+    marginBottom: 8,
+  },
   eventsContainer: {
     flex: 1,
     padding: 16,
@@ -217,58 +337,53 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 16,
   },
-  eventCard: {
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  deadTimeCard: {
-    borderStyle: "dashed",
-    borderWidth: 1,
-    borderColor: "#EA4335",
-  },
-  eventHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  eventVisibility: {
-    fontSize: 12,
-    textTransform: "capitalize",
-  },
-  eventTime: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  eventLocation: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  deadTimeLabel: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 4,
-  },
   noEvents: {
     textAlign: "center",
     marginTop: 24,
     fontSize: 16,
+  },
+  noEventsSmall: {
+    textAlign: "center",
+    fontSize: 12,
+    marginTop: 8,
+    fontStyle: "italic",
   },
   fab: {
     position: "absolute",
     margin: 16,
     right: 0,
     bottom: 0,
+  },
+  // Day view styles
+  dayViewContainer: {
+    flex: 1,
+    padding: 16,
+    paddingTop: 0,
+  },
+  // Week view styles
+  weekViewContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  weekDayContainer: {
+    marginBottom: 16,
+  },
+  weekDayHeader: {
+    flexDirection: "row",
+    padding: 8,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 4,
+    alignItems: "center",
+  },
+  weekDayName: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginRight: 8,
+  },
+  weekDayNumber: {
+    fontSize: 16,
+  },
+  weekDayEvents: {
+    marginTop: 8,
   },
 });

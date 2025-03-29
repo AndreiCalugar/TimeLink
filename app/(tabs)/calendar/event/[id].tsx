@@ -3,6 +3,12 @@ import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Button, Chip, useTheme } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCalendarContext } from "../../../../context/CalendarContext";
+import { format, parse } from "date-fns";
+
+// Define valid routes for type safety
+const Routes = {
+  editEvent: (id: string) => `/calendar/edit/${id}` as const,
+};
 
 export default function EventDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -23,10 +29,28 @@ export default function EventDetailsScreen() {
     );
   }
 
+  // Format date with fallback for invalid dates
+  const formatEventDate = () => {
+    try {
+      const eventDate = parse(event.date, "yyyy-MM-dd", new Date());
+      return format(eventDate, "EEEE, MMMM d, yyyy");
+    } catch (error) {
+      return event.date; // Fallback to the original string
+    }
+  };
+
+  const formattedDate = formatEventDate();
+
   // Handle event deletion
   const handleDelete = async () => {
     await deleteEvent(event.id);
     router.back();
+  };
+
+  // Handle navigation to edit screen
+  const handleEdit = () => {
+    // Here we're working around the type system by using any
+    router.push(Routes.editEvent(event.id) as any);
   };
 
   return (
@@ -64,7 +88,7 @@ export default function EventDetailsScreen() {
           <Text variant="labelLarge" style={styles.label}>
             Date:
           </Text>
-          <Text variant="bodyLarge">{event.date}</Text>
+          <Text variant="bodyLarge">{formattedDate}</Text>
         </View>
 
         {(event.startTime || event.endTime) && (
@@ -98,16 +122,7 @@ export default function EventDetailsScreen() {
       </View>
 
       <View style={styles.actions}>
-        <Button
-          mode="contained"
-          onPress={() =>
-            router.push({
-              pathname: "/(tabs)/calendar/edit/[id]",
-              params: { id: event.id },
-            })
-          }
-          style={styles.button}
-        >
+        <Button mode="contained" onPress={handleEdit} style={styles.button}>
           Edit Event
         </Button>
 

@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 import { ProfileProvider } from "../context/ProfileContext";
 import { CalendarProvider } from "../context/CalendarContext";
+import { UserProvider } from "../context/UserContext";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 
@@ -34,18 +35,21 @@ export default function RootLayout() {
   }
 
   return (
-    <ProfileProvider>
-      <CalendarProvider>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </CalendarProvider>
-    </ProfileProvider>
+    <UserProvider>
+      <ProfileProvider>
+        <CalendarProvider>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="profile" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </CalendarProvider>
+      </ProfileProvider>
+    </UserProvider>
   );
 }
