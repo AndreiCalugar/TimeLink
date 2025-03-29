@@ -20,6 +20,11 @@ describe("AgendaView Component", () => {
   nextWeek.setDate(nextWeek.getDate() + 5);
   const nextWeekStr = nextWeek.toISOString().split("T")[0];
 
+  // Create a past date (7 days ago)
+  const pastWeek = new Date(today);
+  pastWeek.setDate(pastWeek.getDate() - 7);
+  const pastWeekStr = pastWeek.toISOString().split("T")[0];
+
   const mockEvents: Record<string, CalendarEvent[]> = {
     [todayStr]: [
       {
@@ -60,6 +65,16 @@ describe("AgendaView Component", () => {
         visibility: "public",
       },
     ],
+    [pastWeekStr]: [
+      {
+        id: "event-5",
+        title: "Past Meeting",
+        date: pastWeekStr,
+        startTime: "15:00",
+        endTime: "16:00",
+        visibility: "public",
+      },
+    ],
   };
 
   const emptyEvents: Record<string, CalendarEvent[]> = {};
@@ -68,7 +83,7 @@ describe("AgendaView Component", () => {
     jest.clearAllMocks();
   });
 
-  it("renders events grouped by day", () => {
+  it("renders events grouped by day including past events", () => {
     const { getByText } = render(
       <AgendaView events={mockEvents} onEventPress={mockOnEventPress} />
     );
@@ -77,11 +92,12 @@ describe("AgendaView Component", () => {
     expect(getByText("Today")).toBeTruthy();
     expect(getByText("Tomorrow")).toBeTruthy();
 
-    // Check that events are displayed
+    // Check that events are displayed, including past events
     expect(getByText("Team Meeting")).toBeTruthy();
     expect(getByText("Lunch Break")).toBeTruthy();
     expect(getByText("Client Call")).toBeTruthy();
     expect(getByText("Conference")).toBeTruthy();
+    expect(getByText("Past Meeting")).toBeTruthy();
   });
 
   it("triggers onEventPress when an event is clicked", () => {
@@ -103,19 +119,43 @@ describe("AgendaView Component", () => {
     );
 
     // Check that the empty state message is displayed
-    expect(getByText("No upcoming events in the next 14 days")).toBeTruthy();
+    expect(
+      getByText("No events found in the selected time range")
+    ).toBeTruthy();
   });
 
-  it("respects the numberOfDays prop", () => {
+  it("respects the numberOfDays and pastDaysToShow props", () => {
     const { getByText } = render(
       <AgendaView
         events={emptyEvents}
         onEventPress={mockOnEventPress}
         numberOfDays={7}
+        pastDaysToShow={3}
       />
     );
 
-    // Check that the empty state message shows the correct number of days
-    expect(getByText("No upcoming events in the next 7 days")).toBeTruthy();
+    // Check that the empty state message is displayed
+    expect(
+      getByText("No events found in the selected time range")
+    ).toBeTruthy();
+  });
+
+  it("can render with just future events and no past events", () => {
+    const { getByText, queryByText } = render(
+      <AgendaView
+        events={mockEvents}
+        onEventPress={mockOnEventPress}
+        pastDaysToShow={0} // Don't show any past events
+      />
+    );
+
+    // Check that current and future events are displayed
+    expect(getByText("Today")).toBeTruthy();
+    expect(getByText("Tomorrow")).toBeTruthy();
+    expect(getByText("Team Meeting")).toBeTruthy();
+    expect(getByText("Client Call")).toBeTruthy();
+
+    // Past events should not be shown
+    expect(queryByText("Past Meeting")).toBeNull();
   });
 });
