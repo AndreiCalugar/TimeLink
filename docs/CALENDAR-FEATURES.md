@@ -11,6 +11,7 @@ TimeLink's calendar functionality enables users to manage their schedules effect
 - **Month View**: Traditional calendar grid showing events as dots
 - **Week View**: Weekly overview with day-by-day event listings
 - **Day View**: Detailed view of a single day's schedule
+- **Agenda View**: Chronological list of upcoming events grouped by day
 - **Date Navigation**: Controls to move between days, weeks, or return to today
 
 ### Event Management
@@ -44,7 +45,6 @@ TimeLink's calendar functionality enables users to manage their schedules effect
 
 ### UI Improvements
 
-- Agenda view
 - Time-of-day visualization
 - Drag-and-drop rescheduling
 - Calendar theming and customization

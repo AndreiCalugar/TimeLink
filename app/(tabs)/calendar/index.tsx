@@ -19,9 +19,10 @@ import {
 } from "date-fns";
 import EventCard from "@/components/calendar/EventCard";
 import DateNavigator from "@/components/calendar/DateNavigator";
+import AgendaView from "@/components/calendar/AgendaView";
 
 // Define type for calendar view
-type CalendarViewType = "day" | "week" | "month";
+type CalendarViewType = "day" | "week" | "month" | "agenda";
 
 // Define type for event visibility
 type EventVisibility = "public" | "private" | "friends";
@@ -276,13 +277,28 @@ export default function CalendarScreen() {
     );
   };
 
-  // Render the selected view
+  // Add renderAgendaView function
+  const renderAgendaView = () => {
+    return (
+      <View style={styles.agendaViewContainer}>
+        <AgendaView
+          events={events}
+          onEventPress={handleEventPress}
+          numberOfDays={30} // Show events for the next 30 days
+        />
+      </View>
+    );
+  };
+
+  // Update renderCalendarView function to include agenda view
   const renderCalendarView = () => {
     switch (viewType) {
       case "day":
         return renderDayView();
       case "week":
         return renderWeekView();
+      case "agenda":
+        return renderAgendaView();
       case "month":
       default:
         return renderMonthView();
@@ -299,6 +315,7 @@ export default function CalendarScreen() {
             { value: "day", label: "Day" },
             { value: "week", label: "Week" },
             { value: "month", label: "Month" },
+            { value: "agenda", label: "Agenda" },
           ]}
           style={styles.viewSwitcher}
         />
@@ -385,5 +402,9 @@ const styles = StyleSheet.create({
   },
   weekDayEvents: {
     marginTop: 8,
+  },
+  // Add agendaViewContainer style
+  agendaViewContainer: {
+    flex: 1,
   },
 });
