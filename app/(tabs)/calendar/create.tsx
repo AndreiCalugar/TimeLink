@@ -7,14 +7,16 @@ import {
   Chip,
   useTheme,
   IconButton,
+  Divider,
 } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import {
   useCalendarContext,
   EventVisibility,
 } from "../../../context/CalendarContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, parse } from "date-fns";
+import EventAttendees from "../../../components/calendar/EventAttendees";
 
 export default function CreateEventScreen() {
   const router = useRouter();
@@ -40,6 +42,7 @@ export default function CreateEventScreen() {
   const [location, setLocation] = useState("");
   const [visibility, setVisibility] = useState<EventVisibility>("public");
   const [isDeadTime, setIsDeadTime] = useState(false);
+  const [attendees, setAttendees] = useState<string[]>([]);
 
   // State for showing/hiding date and time pickers
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -63,6 +66,7 @@ export default function CreateEventScreen() {
       location,
       visibility,
       isDeadTime,
+      attendees,
       color: isDeadTime
         ? "#EA4335"
         : visibility === "public"
@@ -187,181 +191,194 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text variant="headlineMedium" style={styles.title}>
-        Create New Event
-      </Text>
-
-      <TextInput
-        label="Title"
-        value={title}
-        onChangeText={setTitle}
-        style={styles.input}
+    <>
+      <Stack.Screen
+        options={{
+          title: "Create Event",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: "#fff",
+        }}
       />
+      <ScrollView style={styles.container}>
+        <TextInput
+          label="Title"
+          value={title}
+          onChangeText={setTitle}
+          style={styles.input}
+        />
 
-      {/* Date Picker */}
-      <View style={styles.datePickerContainer}>
-        <Text variant="labelLarge" style={styles.label}>
-          Date:
+        {/* Date Picker */}
+        <View style={styles.datePickerContainer}>
+          <Text variant="labelLarge" style={styles.label}>
+            Date:
+          </Text>
+          <View style={styles.datePickerButton}>
+            <Button
+              mode="outlined"
+              onPress={() => setShowDatePicker(true)}
+              style={styles.dateButton}
+            >
+              {format(date, "EEEE, MMM d, yyyy")}
+            </Button>
+            <IconButton
+              icon="calendar"
+              size={24}
+              onPress={() => setShowDatePicker(true)}
+            />
+          </View>
+          {renderDatePicker()}
+        </View>
+
+        {/* Time Pickers */}
+        <View style={styles.timeContainer}>
+          <View style={styles.timePickerContainer}>
+            <Text variant="labelLarge" style={styles.label}>
+              Start Time:
+            </Text>
+            <View style={styles.timePickerButton}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowStartTimePicker(true)}
+                style={styles.timeButton}
+              >
+                {format(startTime, "h:mm a")}
+              </Button>
+              <IconButton
+                icon="clock-outline"
+                size={24}
+                onPress={() => setShowStartTimePicker(true)}
+              />
+            </View>
+            {renderTimePicker(
+              startTime,
+              handleStartTimeChange,
+              showStartTimePicker
+            )}
+          </View>
+
+          <View style={styles.timePickerContainer}>
+            <Text variant="labelLarge" style={styles.label}>
+              End Time:
+            </Text>
+            <View style={styles.timePickerButton}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowEndTimePicker(true)}
+                style={styles.timeButton}
+              >
+                {format(endTime, "h:mm a")}
+              </Button>
+              <IconButton
+                icon="clock-outline"
+                size={24}
+                onPress={() => setShowEndTimePicker(true)}
+              />
+            </View>
+            {renderTimePicker(endTime, handleEndTimeChange, showEndTimePicker)}
+          </View>
+        </View>
+
+        <TextInput
+          label="Location"
+          value={location}
+          onChangeText={setLocation}
+          style={styles.input}
+        />
+
+        <TextInput
+          label="Description"
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={4}
+          style={styles.input}
+        />
+
+        <Divider style={styles.divider} />
+
+        <EventAttendees attendees={attendees} onChange={setAttendees} />
+
+        <Divider style={styles.divider} />
+
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          Visibility
         </Text>
-        <View style={styles.datePickerButton}>
+
+        <View style={styles.visibilityContainer}>
+          <Chip
+            selected={visibility === "public"}
+            onPress={() => setVisibility("public")}
+            style={[
+              styles.chip,
+              visibility === "public" && {
+                backgroundColor: theme.colors.primaryContainer,
+              },
+            ]}
+          >
+            Public
+          </Chip>
+
+          <Chip
+            selected={visibility === "friends"}
+            onPress={() => setVisibility("friends")}
+            style={[
+              styles.chip,
+              visibility === "friends" && {
+                backgroundColor: theme.colors.primaryContainer,
+              },
+            ]}
+          >
+            Friends Only
+          </Chip>
+
+          <Chip
+            selected={visibility === "private"}
+            onPress={() => setVisibility("private")}
+            style={[
+              styles.chip,
+              visibility === "private" && {
+                backgroundColor: theme.colors.primaryContainer,
+              },
+            ]}
+          >
+            Private
+          </Chip>
+        </View>
+
+        <Chip
+          selected={isDeadTime}
+          onPress={() => setIsDeadTime(!isDeadTime)}
+          style={[
+            styles.deadTimeChip,
+            isDeadTime && {
+              backgroundColor: theme.colors.errorContainer,
+            },
+          ]}
+        >
+          Mark as Dead Time
+        </Chip>
+
+        <View style={styles.actions}>
+          <Button
+            mode="contained"
+            onPress={handleCreateEvent}
+            style={styles.button}
+            icon="plus"
+          >
+            Create Event
+          </Button>
+
           <Button
             mode="outlined"
-            onPress={() => setShowDatePicker(true)}
-            style={styles.dateButton}
+            onPress={() => router.back()}
+            style={styles.button}
+            icon="close"
           >
-            {format(date, "EEEE, MMM d, yyyy")}
+            Cancel
           </Button>
-          <IconButton
-            icon="calendar"
-            size={24}
-            onPress={() => setShowDatePicker(true)}
-          />
         </View>
-        {renderDatePicker()}
-      </View>
-
-      {/* Time Pickers */}
-      <View style={styles.timeContainer}>
-        <View style={styles.timePickerContainer}>
-          <Text variant="labelLarge" style={styles.label}>
-            Start Time:
-          </Text>
-          <View style={styles.timePickerButton}>
-            <Button
-              mode="outlined"
-              onPress={() => setShowStartTimePicker(true)}
-              style={styles.timeButton}
-            >
-              {format(startTime, "h:mm a")}
-            </Button>
-            <IconButton
-              icon="clock-outline"
-              size={24}
-              onPress={() => setShowStartTimePicker(true)}
-            />
-          </View>
-          {renderTimePicker(
-            startTime,
-            handleStartTimeChange,
-            showStartTimePicker
-          )}
-        </View>
-
-        <View style={styles.timePickerContainer}>
-          <Text variant="labelLarge" style={styles.label}>
-            End Time:
-          </Text>
-          <View style={styles.timePickerButton}>
-            <Button
-              mode="outlined"
-              onPress={() => setShowEndTimePicker(true)}
-              style={styles.timeButton}
-            >
-              {format(endTime, "h:mm a")}
-            </Button>
-            <IconButton
-              icon="clock-outline"
-              size={24}
-              onPress={() => setShowEndTimePicker(true)}
-            />
-          </View>
-          {renderTimePicker(endTime, handleEndTimeChange, showEndTimePicker)}
-        </View>
-      </View>
-
-      <TextInput
-        label="Location"
-        value={location}
-        onChangeText={setLocation}
-        style={styles.input}
-      />
-
-      <TextInput
-        label="Description"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={4}
-        style={styles.input}
-      />
-
-      <Text variant="titleMedium" style={styles.sectionTitle}>
-        Visibility
-      </Text>
-
-      <View style={styles.visibilityContainer}>
-        <Chip
-          selected={visibility === "public"}
-          onPress={() => setVisibility("public")}
-          style={[
-            styles.chip,
-            visibility === "public" && {
-              backgroundColor: theme.colors.primaryContainer,
-            },
-          ]}
-        >
-          Public
-        </Chip>
-
-        <Chip
-          selected={visibility === "friends"}
-          onPress={() => setVisibility("friends")}
-          style={[
-            styles.chip,
-            visibility === "friends" && {
-              backgroundColor: theme.colors.primaryContainer,
-            },
-          ]}
-        >
-          Friends Only
-        </Chip>
-
-        <Chip
-          selected={visibility === "private"}
-          onPress={() => setVisibility("private")}
-          style={[
-            styles.chip,
-            visibility === "private" && {
-              backgroundColor: theme.colors.primaryContainer,
-            },
-          ]}
-        >
-          Private
-        </Chip>
-      </View>
-
-      <Chip
-        selected={isDeadTime}
-        onPress={() => setIsDeadTime(!isDeadTime)}
-        style={[
-          styles.deadTimeChip,
-          isDeadTime && {
-            backgroundColor: theme.colors.errorContainer,
-          },
-        ]}
-      >
-        Mark as Dead Time
-      </Chip>
-
-      <View style={styles.actions}>
-        <Button
-          mode="contained"
-          onPress={handleCreateEvent}
-          style={styles.button}
-        >
-          Create Event
-        </Button>
-
-        <Button
-          mode="outlined"
-          onPress={() => router.back()}
-          style={styles.button}
-        >
-          Cancel
-        </Button>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 
@@ -425,5 +442,8 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: 12,
+  },
+  divider: {
+    marginVertical: 16,
   },
 });

@@ -1,9 +1,29 @@
-import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, Button, Chip, useTheme } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Share,
+  Platform,
+} from "react-native";
+import {
+  Text,
+  Button,
+  Chip,
+  useTheme,
+  Portal,
+  Dialog,
+  IconButton,
+  Divider,
+  Surface,
+  Avatar,
+} from "react-native-paper";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useCalendarContext } from "../../../../context/CalendarContext";
-import { format, parse } from "date-fns";
+import { format, parse, isToday, isPast, isFuture } from "date-fns";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import EventAttendees from "../../../../components/calendar/EventAttendees";
 
 // Define valid routes for type safety
 const Routes = {
@@ -15,13 +35,15 @@ export default function EventDetailsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { getEventById, deleteEvent } = useCalendarContext();
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
 
   const event = getEventById(id as string);
 
   if (!event) {
     return (
       <View style={styles.container}>
-        <Text>Event not found</Text>
+        <Stack.Screen options={{ title: "Event Not Found" }} />
+        <Text style={styles.notFoundText}>Event not found</Text>
         <Button mode="contained" onPress={() => router.back()}>
           Back to Calendar
         </Button>
@@ -41,141 +63,345 @@ export default function EventDetailsScreen() {
 
   const formattedDate = formatEventDate();
 
-  // Handle event deletion
-  const handleDelete = async () => {
+  // Determine event status based on date
+  const getEventStatus = () => {
+    try {
+      const eventDate = parse(event.date, "yyyy-MM-dd", new Date());
+      if (isToday(eventDate)) return "today";
+      if (isPast(eventDate)) return "past";
+      if (isFuture(eventDate)) return "upcoming";
+      return "upcoming";
+    } catch (error) {
+      return "upcoming";
+    }
+  };
+
+  const eventStatus = getEventStatus();
+
+  // Get event time period display
+  const getTimePeriod = () => {
+    if (!event.startTime && !event.endTime) return "All day";
+    return `${event.startTime || ""} - ${event.endTime || ""}`;
+  };
+
+  // Handle event deletion with confirmation
+  const showDeleteConfirmation = () => {
+    setDeleteDialogVisible(true);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    setDeleteDialogVisible(false);
     await deleteEvent(event.id);
     router.back();
   };
 
   // Handle navigation to edit screen
   const handleEdit = () => {
-    // Here we're working around the type system by using any
     router.push(Routes.editEvent(event.id) as any);
   };
 
+  // Handle sharing event
+  const handleShare = async () => {
+    try {
+      const eventDetails = `Event: ${
+        event.title
+      }\nDate: ${formattedDate}\nTime: ${getTimePeriod()}\n${
+        event.location ? `Location: ${event.location}\n` : ""
+      }`;
+
+      await Share.share({
+        message: eventDetails,
+        title: event.title,
+      });
+    } catch (error) {
+      console.error("Error sharing event:", error);
+    }
+  };
+
+  // Determine the event header color
+  const headerColor = event.color || theme.colors.primary;
+
+  // Visibility icon mapping
+  const getVisibilityIcon = (visibility: string) => {
+    switch (visibility) {
+      case "public":
+        return "earth";
+      case "friends":
+        return "account-group";
+      case "private":
+        return "lock";
+      default:
+        return "earth";
+    }
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.title}>
-          {event.title}
-        </Text>
-
-        <Chip
-          style={[
-            styles.visibilityChip,
-            { backgroundColor: theme.colors.secondaryContainer },
-          ]}
-          textStyle={{ color: theme.colors.onSecondaryContainer }}
-        >
-          {event.visibility}
-        </Chip>
-
-        {event.isDeadTime && (
-          <Chip
-            style={[
-              styles.deadTimeChip,
-              { backgroundColor: theme.colors.errorContainer },
-            ]}
-            textStyle={{ color: theme.colors.onErrorContainer }}
-          >
-            Dead Time
-          </Chip>
-        )}
-      </View>
-
-      <View style={styles.details}>
-        <View style={styles.detailRow}>
-          <Text variant="labelLarge" style={styles.label}>
-            Date:
+    <>
+      <Stack.Screen
+        options={{
+          title: "Event Details",
+          headerStyle: { backgroundColor: headerColor },
+          headerTintColor: "#fff",
+        }}
+      />
+      <ScrollView style={styles.container}>
+        <Surface style={[styles.eventHeader, { backgroundColor: headerColor }]}>
+          <View style={styles.avatarContainer}>
+            <Avatar.Text
+              size={60}
+              label={event.title.charAt(0).toUpperCase()}
+              color="#fff"
+              style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+            />
+          </View>
+          <Text variant="headlineMedium" style={styles.headerTitle}>
+            {event.title}
           </Text>
-          <Text variant="bodyLarge">{formattedDate}</Text>
+
+          <View style={styles.statusRow}>
+            <Chip
+              style={styles.statusChip}
+              textStyle={{ color: "#fff" }}
+              icon={getVisibilityIcon(event.visibility)}
+            >
+              {event.visibility}
+            </Chip>
+
+            {event.isDeadTime && (
+              <Chip
+                style={styles.deadTimeChip}
+                textStyle={{ color: "#fff" }}
+                icon="clock-remove-outline"
+              >
+                Dead Time
+              </Chip>
+            )}
+
+            <Chip
+              style={[
+                styles.statusChip,
+                {
+                  backgroundColor:
+                    eventStatus === "today"
+                      ? "#4caf50"
+                      : eventStatus === "past"
+                      ? "#9e9e9e"
+                      : "#2196f3",
+                },
+              ]}
+              textStyle={{ color: "#fff" }}
+              icon={
+                eventStatus === "today"
+                  ? "calendar-today"
+                  : eventStatus === "past"
+                  ? "calendar-arrow-left"
+                  : "calendar-arrow-right"
+              }
+            >
+              {eventStatus === "today"
+                ? "Today"
+                : eventStatus === "past"
+                ? "Past"
+                : "Upcoming"}
+            </Chip>
+          </View>
+        </Surface>
+
+        <View style={styles.detailsCard}>
+          <View style={styles.detailSection}>
+            <View style={styles.detailRow}>
+              <MaterialCommunityIcons
+                name="calendar"
+                size={22}
+                color={theme.colors.primary}
+                style={styles.detailIcon}
+              />
+              <Text variant="bodyLarge">{formattedDate}</Text>
+            </View>
+
+            {(event.startTime || event.endTime) && (
+              <View style={styles.detailRow}>
+                <MaterialCommunityIcons
+                  name="clock-outline"
+                  size={22}
+                  color={theme.colors.primary}
+                  style={styles.detailIcon}
+                />
+                <Text variant="bodyLarge">{getTimePeriod()}</Text>
+              </View>
+            )}
+
+            {event.location && (
+              <View style={styles.detailRow}>
+                <MaterialCommunityIcons
+                  name="map-marker"
+                  size={22}
+                  color={theme.colors.primary}
+                  style={styles.detailIcon}
+                />
+                <Text variant="bodyLarge">{event.location}</Text>
+              </View>
+            )}
+          </View>
+
+          <Divider style={styles.divider} />
+
+          {event.description && (
+            <View style={styles.descriptionSection}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Description
+              </Text>
+              <Text variant="bodyMedium" style={styles.description}>
+                {event.description}
+              </Text>
+            </View>
+          )}
+
+          {event.attendees && event.attendees.length > 0 && (
+            <>
+              <Divider style={styles.divider} />
+              <EventAttendees attendees={event.attendees} readonly={true} />
+            </>
+          )}
         </View>
 
-        {(event.startTime || event.endTime) && (
-          <View style={styles.detailRow}>
-            <Text variant="labelLarge" style={styles.label}>
-              Time:
-            </Text>
-            <Text variant="bodyLarge">
-              {`${event.startTime || ""} - ${event.endTime || ""}`}
-            </Text>
-          </View>
-        )}
+        <View style={styles.actions}>
+          <Button
+            mode="contained"
+            onPress={handleEdit}
+            style={styles.button}
+            icon="pencil"
+          >
+            Edit Event
+          </Button>
 
-        {event.location && (
-          <View style={styles.detailRow}>
-            <Text variant="labelLarge" style={styles.label}>
-              Location:
-            </Text>
-            <Text variant="bodyLarge">{event.location}</Text>
-          </View>
-        )}
+          <Button
+            mode="contained"
+            onPress={handleShare}
+            style={[styles.button, { backgroundColor: "#009688" }]}
+            icon="share-variant"
+          >
+            Share Event
+          </Button>
 
-        {event.description && (
-          <View style={styles.description}>
-            <Text variant="labelLarge" style={styles.label}>
-              Description:
-            </Text>
-            <Text variant="bodyMedium">{event.description}</Text>
-          </View>
-        )}
-      </View>
+          <Button
+            mode="outlined"
+            onPress={showDeleteConfirmation}
+            textColor={theme.colors.error}
+            style={[styles.button, styles.deleteButton]}
+            icon="delete"
+          >
+            Delete Event
+          </Button>
+        </View>
+      </ScrollView>
 
-      <View style={styles.actions}>
-        <Button mode="contained" onPress={handleEdit} style={styles.button}>
-          Edit Event
-        </Button>
-
-        <Button
-          mode="outlined"
-          onPress={handleDelete}
-          textColor={theme.colors.error}
-          style={[styles.button, styles.deleteButton]}
+      <Portal>
+        <Dialog
+          visible={deleteDialogVisible}
+          onDismiss={() => setDeleteDialogVisible(false)}
         >
-          Delete Event
-        </Button>
-      </View>
-    </ScrollView>
+          <Dialog.Title>Delete Event</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              Are you sure you want to delete "{event.title}"? This action
+              cannot be undone.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setDeleteDialogVisible(false)}>
+              Cancel
+            </Button>
+            <Button
+              textColor={theme.colors.error}
+              onPress={handleDeleteConfirmed}
+            >
+              Delete
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
   },
-  header: {
-    marginBottom: 24,
+  notFoundText: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: "center",
   },
-  title: {
+  eventHeader: {
+    padding: 24,
+    alignItems: "center",
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  avatarContainer: {
+    marginBottom: 12,
+  },
+  headerTitle: {
+    color: "#fff",
     fontWeight: "bold",
-    marginBottom: 8,
+    textAlign: "center",
+    marginBottom: 12,
   },
-  visibilityChip: {
-    marginBottom: 8,
-    alignSelf: "flex-start",
+  statusRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  statusChip: {
+    margin: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   deadTimeChip: {
-    marginBottom: 8,
-    alignSelf: "flex-start",
+    margin: 4,
+    backgroundColor: "#f44336",
   },
-  details: {
-    marginBottom: 24,
+  detailsCard: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+  },
+  detailSection: {
+    marginBottom: 8,
   },
   detailRow: {
     flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
-  label: {
-    width: 80,
+  detailIcon: {
+    marginRight: 12,
+  },
+  divider: {
+    marginVertical: 16,
+  },
+  descriptionSection: {
+    marginBottom: 8,
+  },
+  sectionTitle: {
     fontWeight: "bold",
+    marginBottom: 8,
   },
   description: {
-    marginTop: 12,
+    lineHeight: 22,
   },
   actions: {
-    marginTop: 16,
+    padding: 16,
+    marginBottom: 24,
   },
   button: {
     marginBottom: 12,

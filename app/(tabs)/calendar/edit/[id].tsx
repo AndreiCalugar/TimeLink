@@ -7,20 +7,25 @@ import {
   Chip,
   useTheme,
   IconButton,
+  Portal,
+  Dialog,
+  Divider,
 } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import {
   useCalendarContext,
   EventVisibility,
 } from "../../../../context/CalendarContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, parse } from "date-fns";
+import EventAttendees from "../../../../components/calendar/EventAttendees";
 
 export default function EditEventScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { id } = useLocalSearchParams();
-  const { getEventById, updateEvent } = useCalendarContext();
+  const { getEventById, updateEvent, deleteEvent } = useCalendarContext();
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
 
   // Fetch the event by ID
   const event = getEventById(id as string);
@@ -61,6 +66,7 @@ export default function EditEventScreen() {
     event.visibility
   );
   const [isDeadTime, setIsDeadTime] = useState(event.isDeadTime || false);
+  const [attendees, setAttendees] = useState<string[]>(event.attendees || []);
 
   // State for showing/hiding date and time pickers
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -84,6 +90,7 @@ export default function EditEventScreen() {
       location,
       visibility,
       isDeadTime,
+      attendees,
       color: isDeadTime
         ? "#EA4335"
         : visibility === "public"
@@ -93,6 +100,17 @@ export default function EditEventScreen() {
         : "#FBBC05",
     });
 
+    router.back();
+  };
+
+  // Handle delete with confirmation
+  const showDeleteConfirmation = () => {
+    setDeleteDialogVisible(true);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    setDeleteDialogVisible(false);
+    await deleteEvent(event.id);
     router.back();
   };
 
@@ -128,198 +146,240 @@ export default function EditEventScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text variant="headlineMedium" style={styles.title}>
-        Edit Event
-      </Text>
-
-      <TextInput
-        label="Title"
-        value={title}
-        onChangeText={setTitle}
-        style={styles.input}
+    <>
+      <Stack.Screen
+        options={{
+          title: "Edit Event",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: "#fff",
+        }}
       />
-
-      {/* Date Picker */}
-      <View style={styles.datePickerContainer}>
-        <Text variant="labelLarge" style={styles.label}>
-          Date:
+      <ScrollView style={styles.container}>
+        <Text variant="headlineMedium" style={styles.title}>
+          Edit Event
         </Text>
-        <View style={styles.datePickerButton}>
+
+        <TextInput
+          label="Title"
+          value={title}
+          onChangeText={setTitle}
+          style={styles.input}
+        />
+
+        {/* Date Picker */}
+        <View style={styles.datePickerContainer}>
+          <Text variant="labelLarge" style={styles.label}>
+            Date:
+          </Text>
+          <View style={styles.datePickerButton}>
+            <Button
+              mode="outlined"
+              onPress={() => setShowDatePicker(true)}
+              style={styles.dateButton}
+            >
+              {format(date, "EEEE, MMM d, yyyy")}
+            </Button>
+            <IconButton
+              icon="calendar"
+              size={24}
+              onPress={() => setShowDatePicker(true)}
+            />
+          </View>
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={handleDateChange}
+            />
+          )}
+        </View>
+
+        {/* Time Pickers */}
+        <View style={styles.timeContainer}>
+          <View style={styles.timePickerContainer}>
+            <Text variant="labelLarge" style={styles.label}>
+              Start Time:
+            </Text>
+            <View style={styles.timePickerButton}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowStartTimePicker(true)}
+                style={styles.timeButton}
+              >
+                {format(startTime, "h:mm a")}
+              </Button>
+              <IconButton
+                icon="clock-outline"
+                size={24}
+                onPress={() => setShowStartTimePicker(true)}
+              />
+            </View>
+            {showStartTimePicker && (
+              <DateTimePicker
+                value={startTime}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={handleStartTimeChange}
+              />
+            )}
+          </View>
+
+          <View style={styles.timePickerContainer}>
+            <Text variant="labelLarge" style={styles.label}>
+              End Time:
+            </Text>
+            <View style={styles.timePickerButton}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowEndTimePicker(true)}
+                style={styles.timeButton}
+              >
+                {format(endTime, "h:mm a")}
+              </Button>
+              <IconButton
+                icon="clock-outline"
+                size={24}
+                onPress={() => setShowEndTimePicker(true)}
+              />
+            </View>
+            {showEndTimePicker && (
+              <DateTimePicker
+                value={endTime}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={handleEndTimeChange}
+              />
+            )}
+          </View>
+        </View>
+
+        <TextInput
+          label="Location"
+          value={location}
+          onChangeText={setLocation}
+          style={styles.input}
+        />
+
+        <TextInput
+          label="Description"
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={4}
+          style={styles.input}
+        />
+
+        <Divider style={styles.divider} />
+
+        <EventAttendees attendees={attendees} onChange={setAttendees} />
+
+        <Divider style={styles.divider} />
+
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          Visibility
+        </Text>
+
+        <View style={styles.visibilityContainer}>
+          <Chip
+            selected={visibility === "public"}
+            onPress={() => setVisibility("public")}
+            style={[
+              styles.chip,
+              visibility === "public" && {
+                backgroundColor: theme.colors.primaryContainer,
+              },
+            ]}
+          >
+            Public
+          </Chip>
+
+          <Chip
+            selected={visibility === "friends"}
+            onPress={() => setVisibility("friends")}
+            style={[
+              styles.chip,
+              visibility === "friends" && {
+                backgroundColor: theme.colors.primaryContainer,
+              },
+            ]}
+          >
+            Friends Only
+          </Chip>
+
+          <Chip
+            selected={visibility === "private"}
+            onPress={() => setVisibility("private")}
+            style={[
+              styles.chip,
+              visibility === "private" && {
+                backgroundColor: theme.colors.primaryContainer,
+              },
+            ]}
+          >
+            Private
+          </Chip>
+        </View>
+
+        <Chip
+          selected={isDeadTime}
+          onPress={() => setIsDeadTime(!isDeadTime)}
+          style={[
+            styles.deadTimeChip,
+            isDeadTime && {
+              backgroundColor: theme.colors.errorContainer,
+            },
+          ]}
+        >
+          Mark as Dead Time
+        </Chip>
+
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            onPress={handleUpdateEvent}
+            style={styles.updateButton}
+          >
+            Update Event
+          </Button>
+
           <Button
             mode="outlined"
-            onPress={() => setShowDatePicker(true)}
-            style={styles.dateButton}
+            onPress={showDeleteConfirmation}
+            textColor={theme.colors.error}
+            style={styles.deleteButton}
           >
-            {format(date, "EEEE, MMM d, yyyy")}
+            Delete Event
           </Button>
-          <IconButton
-            icon="calendar"
-            size={24}
-            onPress={() => setShowDatePicker(true)}
-          />
         </View>
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={handleDateChange}
-          />
-        )}
-      </View>
+      </ScrollView>
 
-      {/* Time Pickers */}
-      <View style={styles.timeContainer}>
-        <View style={styles.timePickerContainer}>
-          <Text variant="labelLarge" style={styles.label}>
-            Start Time:
-          </Text>
-          <View style={styles.timePickerButton}>
-            <Button
-              mode="outlined"
-              onPress={() => setShowStartTimePicker(true)}
-              style={styles.timeButton}
-            >
-              {format(startTime, "h:mm a")}
+      <Portal>
+        <Dialog
+          visible={deleteDialogVisible}
+          onDismiss={() => setDeleteDialogVisible(false)}
+        >
+          <Dialog.Title>Delete Event</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              Are you sure you want to delete "{event.title}"? This action
+              cannot be undone.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setDeleteDialogVisible(false)}>
+              Cancel
             </Button>
-            <IconButton
-              icon="clock-outline"
-              size={24}
-              onPress={() => setShowStartTimePicker(true)}
-            />
-          </View>
-          {showStartTimePicker && (
-            <DateTimePicker
-              value={startTime}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleStartTimeChange}
-            />
-          )}
-        </View>
-
-        <View style={styles.timePickerContainer}>
-          <Text variant="labelLarge" style={styles.label}>
-            End Time:
-          </Text>
-          <View style={styles.timePickerButton}>
             <Button
-              mode="outlined"
-              onPress={() => setShowEndTimePicker(true)}
-              style={styles.timeButton}
+              textColor={theme.colors.error}
+              onPress={handleDeleteConfirmed}
             >
-              {format(endTime, "h:mm a")}
+              Delete
             </Button>
-            <IconButton
-              icon="clock-outline"
-              size={24}
-              onPress={() => setShowEndTimePicker(true)}
-            />
-          </View>
-          {showEndTimePicker && (
-            <DateTimePicker
-              value={endTime}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleEndTimeChange}
-            />
-          )}
-        </View>
-      </View>
-
-      <TextInput
-        label="Location"
-        value={location}
-        onChangeText={setLocation}
-        style={styles.input}
-      />
-
-      <TextInput
-        label="Description"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={4}
-        style={styles.input}
-      />
-
-      <Text variant="titleMedium" style={styles.sectionTitle}>
-        Visibility
-      </Text>
-
-      <View style={styles.visibilityContainer}>
-        <Chip
-          selected={visibility === "public"}
-          onPress={() => setVisibility("public")}
-          style={[
-            styles.chip,
-            visibility === "public" && {
-              backgroundColor: theme.colors.primaryContainer,
-            },
-          ]}
-        >
-          Public
-        </Chip>
-
-        <Chip
-          selected={visibility === "friends"}
-          onPress={() => setVisibility("friends")}
-          style={[
-            styles.chip,
-            visibility === "friends" && {
-              backgroundColor: theme.colors.primaryContainer,
-            },
-          ]}
-        >
-          Friends Only
-        </Chip>
-
-        <Chip
-          selected={visibility === "private"}
-          onPress={() => setVisibility("private")}
-          style={[
-            styles.chip,
-            visibility === "private" && {
-              backgroundColor: theme.colors.primaryContainer,
-            },
-          ]}
-        >
-          Private
-        </Chip>
-      </View>
-
-      <Chip
-        selected={isDeadTime}
-        onPress={() => setIsDeadTime(!isDeadTime)}
-        style={[
-          styles.deadTimeChip,
-          isDeadTime && {
-            backgroundColor: theme.colors.errorContainer,
-          },
-        ]}
-      >
-        Mark as Dead Time
-      </Chip>
-
-      <View style={styles.actions}>
-        <Button
-          mode="contained"
-          onPress={handleUpdateEvent}
-          style={styles.button}
-        >
-          Update Event
-        </Button>
-
-        <Button
-          mode="outlined"
-          onPress={() => router.back()}
-          style={styles.button}
-        >
-          Cancel
-        </Button>
-      </View>
-    </ScrollView>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </>
   );
 }
 
@@ -378,10 +438,16 @@ const styles = StyleSheet.create({
   deadTimeChip: {
     marginBottom: 24,
   },
-  actions: {
+  buttonContainer: {
     marginTop: 16,
   },
-  button: {
+  updateButton: {
     marginBottom: 12,
+  },
+  deleteButton: {
+    marginBottom: 12,
+  },
+  divider: {
+    marginVertical: 16,
   },
 });
