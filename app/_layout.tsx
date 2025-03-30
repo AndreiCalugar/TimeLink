@@ -12,15 +12,37 @@ import "react-native-reanimated";
 import { ProfileProvider } from "../context/ProfileContext";
 import { CalendarProvider } from "../context/CalendarContext";
 import { UserProvider } from "../context/UserContext";
-import { Provider as PaperProvider, MD3LightTheme } from "react-native-paper";
+import {
+  Provider as PaperProvider,
+  MD3LightTheme,
+  configureFonts,
+} from "react-native-paper";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-// Define a basic theme without custom variants
+// Define a more complete theme with custom colors
 const theme = {
   ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: "#2196F3", // Blue
+    primaryContainer: "#E3F2FD",
+    secondary: "#4CAF50", // Green
+    secondaryContainer: "#E8F5E9",
+    tertiary: "#FF9800", // Orange
+    tertiaryContainer: "#FFF3E0",
+    error: "#F44336",
+    errorContainer: "#FFEBEE",
+    background: "#FFFFFF",
+    surface: "#FFFFFF",
+    surfaceVariant: "#F5F5F5",
+    onPrimary: "#FFFFFF",
+    onSecondary: "#FFFFFF",
+    onTertiary: "#FFFFFF",
+    onError: "#FFFFFF",
+  },
 };
 
 export default function RootLayout() {

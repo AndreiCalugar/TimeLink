@@ -1,94 +1,164 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Define types for user profile
-export interface UserProfile {
+export interface User {
   id: string;
   name: string;
   email: string;
-  bio: string;
-  avatar: string;
+  avatar?: string;
+  bio?: string;
   location?: string;
   joinDate?: string;
 }
 
 // Define the context type
 interface UserContextType {
-  userProfile: UserProfile | null;
-  setUserProfile: (profile: UserProfile) => void;
-  updateUserField: (field: keyof UserProfile, value: string) => void;
-  isLoggedIn: boolean;
+  user: User | null;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  register: (name: string, email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  updateUser: (data: Partial<User>) => Promise<void>;
 }
 
 // Create context with default values
-const UserContext = createContext<UserContextType>({
-  userProfile: null,
-  setUserProfile: () => {},
-  updateUserField: () => {},
-  isLoggedIn: false,
-  login: async () => false,
-  logout: () => {},
-});
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // Context provider component
-export const UserProvider = ({ children }: { children: ReactNode }) => {
-  // Mock user data - in a real app, this would come from authentication and API
-  const mockUser: UserProfile = {
-    id: "user123",
-    name: "Jamie Smith",
-    email: "jamie.smith@example.com",
-    bio: "Exploring the intersection of technology and creativity. Love traveling and good coffee!",
-    avatar: "https://i.pravatar.cc/300?u=jamie",
-    location: "San Francisco, CA",
-    joinDate: "2022-05-15",
+export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Create a default mock user
+  const createMockUser = async () => {
+    // Mock user data for demonstration
+    const mockUser: User = {
+      id: "user1",
+      name: "John Doe",
+      email: "john.doe@example.com",
+      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      bio: "TimeLink enthusiast and event organizer",
+      location: "New York, NY",
+      joinDate: "2023-01-15",
+    };
+
+    setUser(mockUser);
+    await AsyncStorage.setItem("user", JSON.stringify(mockUser));
+    return mockUser;
   };
 
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(mockUser);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true); // Set to true for demo purposes
+  useEffect(() => {
+    // Check if user is logged in (AsyncStorage)
+    const checkLoggedIn = async () => {
+      try {
+        const userString = await AsyncStorage.getItem("user");
+        if (userString) {
+          setUser(JSON.parse(userString));
+        } else {
+          // Auto-create a mock user for demo/development
+          await createMockUser();
+        }
+      } catch (error) {
+        console.error("Failed to get user from storage", error);
+        // If there's an error, create a mock user anyway
+        await createMockUser();
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Update a specific field in the user profile
-  const updateUserField = (field: keyof UserProfile, value: string) => {
-    if (userProfile) {
-      setUserProfile({
-        ...userProfile,
-        [field]: value,
-      });
-    }
-  };
+    checkLoggedIn();
+  }, []);
 
-  // Mock login function
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, you would make an API call here to authenticate
+    // This would normally validate with an API
+    setIsLoading(true);
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // For demo purposes, any login succeeds
-      setUserProfile(mockUser);
-      setIsLoggedIn(true);
+      // Mock user data (in a real app, this would come from the API)
+      const mockUser: User = {
+        id: "user1",
+        name: "John Doe",
+        email: email,
+        avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+        bio: "TimeLink enthusiast and event organizer",
+        location: "New York, NY",
+        joinDate: "2023-01-15",
+      };
+
+      setUser(mockUser);
+      await AsyncStorage.setItem("user", JSON.stringify(mockUser));
       return true;
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Login failed", error);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Logout function
-  const logout = () => {
-    setUserProfile(null);
-    setIsLoggedIn(false);
+  const register = async (
+    name: string,
+    email: string,
+    password: string
+  ): Promise<boolean> => {
+    // This would normally register with an API
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Create new user (in a real app, this would be created via API)
+      const newUser: User = {
+        id: Date.now().toString(), // Would come from backend
+        name,
+        email,
+        joinDate: new Date().toISOString().split("T")[0],
+      };
+
+      setUser(newUser);
+      await AsyncStorage.setItem("user", JSON.stringify(newUser));
+      return true;
+    } catch (error) {
+      console.error("Registration failed", error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    // Clear user data
+    setUser(null);
+    await AsyncStorage.removeItem("user");
+  };
+
+  const updateUser = async (data: Partial<User>): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Failed to update user", error);
+    }
   };
 
   return (
     <UserContext.Provider
       value={{
-        userProfile,
-        setUserProfile,
-        updateUserField,
-        isLoggedIn,
+        user,
+        isLoading,
         login,
+        register,
         logout,
+        updateUser,
       }}
     >
       {children}
@@ -97,4 +167,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 };
 
 // Custom hook for using the context
-export const useUserContext = () => useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
+  return context;
+};

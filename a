@@ -1,0 +1,5 @@
+21a27c0 Merge feature/agenda-view: Enhanced calendar with Agenda View functionality
+ddf5e71 Enhance AgendaView with 'Past Event' badge and 'View details' button for improved interaction
+ade6e85 Enhanced Agenda View with temporal visual differentiation for past, current, and future events
+384ff30 Add Agenda View feature
+dab71f7 Merge calendar-enhancements: Add DateNavigator component and calendar features

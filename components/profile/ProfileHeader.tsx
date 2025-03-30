@@ -1,70 +1,173 @@
 import React from "react";
-import { StyleSheet, View, Image } from "react-native";
-import { Button } from "react-native-paper";
-import AppText from "@/components/ui/AppText"; // Import our custom Text component
+import { StyleSheet, View, Image, ImageBackground } from "react-native";
+import { Text, Button, Avatar } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 interface ProfileHeaderProps {
   name: string;
   bio?: string;
   profilePicture?: string;
+  coverPhoto?: string;
+  location?: string;
+  joinDate?: string;
   onEdit: () => void;
 }
 
-// Simplifying the ProfileHeader component to diagnose the issue
 export default function ProfileHeader({
   name,
   bio,
   profilePicture,
+  coverPhoto,
+  location,
+  joinDate,
   onEdit,
 }: ProfileHeaderProps) {
+  // Get user initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
     <View style={styles.container}>
-      {profilePicture ? (
-        <Image source={{ uri: profilePicture }} style={styles.profilePicture} />
+      {/* Cover Photo */}
+      {coverPhoto ? (
+        <ImageBackground
+          source={{ uri: coverPhoto }}
+          style={styles.coverPhoto}
+          resizeMode="cover"
+        >
+          <View style={styles.coverOverlay} />
+        </ImageBackground>
       ) : (
-        <View style={[styles.profilePicture, { backgroundColor: "#e1e1e1" }]}>
-          <AppText style={{ fontSize: 36, textAlign: "center" }}>
-            {name.substring(0, 2).toUpperCase()}
-          </AppText>
-        </View>
+        <View style={styles.coverPhotoPlaceholder} />
       )}
-      <AppText style={[styles.name, { fontSize: 24, fontWeight: "bold" }]}>
-        {name}
-      </AppText>
-      {bio && <AppText style={styles.bio}>{bio}</AppText>}
-      <Button
-        mode="outlined"
-        onPress={onEdit}
-        style={styles.editButton}
-        labelStyle={{ textTransform: "none" }}
-      >
-        Edit Profile
-      </Button>
+
+      {/* Profile Picture */}
+      <View style={styles.profilePictureContainer}>
+        {profilePicture ? (
+          <Avatar.Image
+            size={100}
+            source={{ uri: profilePicture }}
+            style={styles.profilePicture}
+          />
+        ) : (
+          <Avatar.Text
+            size={100}
+            label={getInitials(name)}
+            style={styles.profilePicture}
+          />
+        )}
+      </View>
+
+      {/* Profile Information */}
+      <View style={styles.infoContainer}>
+        <Text variant="headlineMedium" style={styles.name}>
+          {name}
+        </Text>
+
+        {bio && (
+          <Text variant="bodyMedium" style={styles.bio}>
+            {bio}
+          </Text>
+        )}
+
+        <View style={styles.detailsContainer}>
+          {location && (
+            <View style={styles.detailRow}>
+              <MaterialCommunityIcons
+                name="map-marker"
+                size={16}
+                color="#666"
+              />
+              <Text variant="bodySmall" style={styles.detailText}>
+                {location}
+              </Text>
+            </View>
+          )}
+
+          {joinDate && (
+            <View style={styles.detailRow}>
+              <MaterialCommunityIcons name="calendar" size={16} color="#666" />
+              <Text variant="bodySmall" style={styles.detailText}>
+                Joined {joinDate}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <Button
+          mode="outlined"
+          onPress={onEdit}
+          icon="account-edit"
+          style={styles.editButton}
+        >
+          Edit Profile
+        </Button>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
-    padding: 20,
     backgroundColor: "#fff",
+    marginBottom: 8,
+  },
+  coverPhoto: {
+    height: 150,
+    width: "100%",
+  },
+  coverPhotoPlaceholder: {
+    height: 150,
+    width: "100%",
+    backgroundColor: "#e0e0e0",
+  },
+  coverOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.2)",
+  },
+  profilePictureContainer: {
+    alignItems: "center",
+    marginTop: -50,
   },
   profilePicture: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 12,
-    justifyContent: "center",
+    borderWidth: 4,
+    borderColor: "#fff",
+  },
+  infoContainer: {
+    alignItems: "center",
+    padding: 16,
   },
   name: {
-    marginBottom: 4,
-    textAlign: "center",
+    fontWeight: "bold",
+    marginTop: 8,
   },
   bio: {
     textAlign: "center",
+    marginVertical: 8,
+    paddingHorizontal: 16,
     color: "#666",
-    marginBottom: 16,
+  },
+  detailsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 8,
+    flexWrap: "wrap",
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 8,
+    marginVertical: 4,
+  },
+  detailText: {
+    marginLeft: 4,
+    color: "#666",
   },
   editButton: {
     marginTop: 8,
