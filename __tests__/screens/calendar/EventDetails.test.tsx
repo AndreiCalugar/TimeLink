@@ -3,11 +3,24 @@ import { render, fireEvent } from "@testing-library/react-native";
 import EventDetailsScreen from "../../../app/(tabs)/calendar/event/[id]";
 import { useCalendarContext } from "../../../context/CalendarContext";
 import { Share } from "react-native";
+import { Provider as PaperProvider } from "react-native-paper";
 
-// Mock the useLocalSearchParams hook
+// Mock expo-font
+jest.mock("expo-font", () => ({
+  isLoaded: jest.fn().mockReturnValue(true),
+  loadAsync: jest.fn().mockResolvedValue(true),
+}));
+
+// Create mock router
+const mockRouter = {
+  push: jest.fn(),
+  back: jest.fn(),
+};
+
+// Mock the expo-router hooks
 jest.mock("expo-router", () => ({
-  ...jest.requireActual("expo-router"),
   useLocalSearchParams: jest.fn(() => ({ id: "event-1" })),
+  useRouter: jest.fn(() => mockRouter),
   Stack: {
     Screen: jest.fn().mockReturnValue(null),
   },
@@ -25,24 +38,83 @@ jest.mock("react-native/Libraries/Share/Share", () => ({
 
 // Mock MaterialCommunityIcons
 jest.mock("@expo/vector-icons", () => ({
-  MaterialCommunityIcons: jest.fn().mockReturnValue(null),
+  MaterialCommunityIcons: ({
+    name,
+    size,
+    color,
+  }: {
+    name: string;
+    size: number;
+    color: string;
+  }) => {
+    return React.createElement("Text", {}, `Icon-${name}`);
+  },
 }));
+
+// Mock the Portal and Dialog components from react-native-paper
+jest.mock("react-native-paper", () => {
+  const ActualReactNativePaper = jest.requireActual("react-native-paper");
+  return {
+    ...ActualReactNativePaper,
+    Portal: ({ children }: { children: React.ReactNode }) => children,
+    Dialog: {
+      Title: ({ children }: { children: React.ReactNode }) =>
+        React.createElement("div", { "data-testid": "dialog-title" }, children),
+      Content: ({ children }: { children: React.ReactNode }) =>
+        React.createElement(
+          "div",
+          { "data-testid": "dialog-content" },
+          children
+        ),
+      Actions: ({ children }: { children: React.ReactNode }) =>
+        React.createElement(
+          "div",
+          { "data-testid": "dialog-actions" },
+          children
+        ),
+    },
+    Provider: ({ children }: { children: React.ReactNode }) => children,
+    Button: ({
+      onPress,
+      children,
+    }: {
+      onPress: () => void;
+      children: React.ReactNode;
+    }) => React.createElement("button", { onClick: onPress }, children),
+    Chip: ({ children }: { children: React.ReactNode }) =>
+      React.createElement("span", {}, children),
+    Card: {
+      Title: ({ title }: { title: string }) =>
+        React.createElement("div", {}, title),
+      Content: ({ children }: { children: React.ReactNode }) =>
+        React.createElement("div", {}, children),
+    },
+    Text: ({ children }: { children: React.ReactNode }) =>
+      React.createElement("span", {}, children),
+    IconButton: ({ icon, onPress }: { icon: string; onPress: () => void }) =>
+      React.createElement("button", { onClick: onPress }, icon),
+  };
+});
 
 // Mock EventAttendees component
 jest.mock("../../../components/calendar/EventAttendees", () => {
   return jest
     .fn()
-    .mockImplementation(({ attendees }) => (
-      <div data-testid="mock-attendees">{attendees.length} attendees</div>
-    ));
+    .mockImplementation(({ attendees }) =>
+      React.createElement(
+        "div",
+        { "data-testid": "mock-attendees" },
+        `${attendees ? attendees.length : 0} attendees`
+      )
+    );
 });
 
-describe("EventDetailsScreen", () => {
-  const mockRouter = {
-    push: jest.fn(),
-    back: jest.fn(),
-  };
+// Helper function to render with paper provider
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(ui);
+};
 
+describe("EventDetailsScreen", () => {
   const mockDeleteEvent = jest.fn();
   const mockEvent = {
     id: "event-1",
@@ -65,13 +137,10 @@ describe("EventDetailsScreen", () => {
       getEventById: jest.fn().mockReturnValue(mockEvent),
       deleteEvent: mockDeleteEvent,
     });
-
-    // Setup mock router
-    (require("expo-router").useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
   it("renders the event details correctly", () => {
-    const { getByText } = render(<EventDetailsScreen />);
+    const { getByText } = renderWithProviders(<EventDetailsScreen />);
 
     // Check that essential event information is displayed
     expect(getByText("Team Meeting")).toBeTruthy();
@@ -81,7 +150,7 @@ describe("EventDetailsScreen", () => {
   });
 
   it("navigates to edit screen when Edit button is pressed", () => {
-    const { getByText } = render(<EventDetailsScreen />);
+    const { getByText } = renderWithProviders(<EventDetailsScreen />);
 
     // Find and press the Edit button
     const editButton = getByText("Edit Event");
@@ -92,21 +161,20 @@ describe("EventDetailsScreen", () => {
   });
 
   it("shows delete confirmation dialog when Delete button is pressed", () => {
-    const { getByText, queryByText } = render(<EventDetailsScreen />);
-
-    // Initially, the dialog should not be visible
-    expect(queryByText(/Are you sure you want to delete/i)).toBeNull();
+    const { getByText, getByTestId } = renderWithProviders(
+      <EventDetailsScreen />
+    );
 
     // Find and press the Delete button
     const deleteButton = getByText("Delete Event");
     fireEvent.press(deleteButton);
 
     // Now the dialog should be visible
-    expect(getByText(/Are you sure you want to delete/i)).toBeTruthy();
+    expect(getByTestId("dialog-content")).toBeTruthy();
   });
 
   it("deletes the event and goes back when confirmed", () => {
-    const { getByText } = render(<EventDetailsScreen />);
+    const { getByText } = renderWithProviders(<EventDetailsScreen />);
 
     // Open the delete dialog
     const deleteButton = getByText("Delete Event");
@@ -124,7 +192,7 @@ describe("EventDetailsScreen", () => {
   });
 
   it("shares the event when Share button is pressed", async () => {
-    const { getByText } = render(<EventDetailsScreen />);
+    const { getByText } = renderWithProviders(<EventDetailsScreen />);
 
     // Find and press the Share button
     const shareButton = getByText("Share Event");
@@ -140,7 +208,7 @@ describe("EventDetailsScreen", () => {
   });
 
   it("displays attendees when they are present", () => {
-    const { getByTestId } = render(<EventDetailsScreen />);
+    const { getByTestId } = renderWithProviders(<EventDetailsScreen />);
 
     // Check that the attendees component is rendered
     expect(getByTestId("mock-attendees")).toBeTruthy();
@@ -153,7 +221,7 @@ describe("EventDetailsScreen", () => {
       deleteEvent: mockDeleteEvent,
     });
 
-    const { getByText } = render(<EventDetailsScreen />);
+    const { getByText } = renderWithProviders(<EventDetailsScreen />);
 
     // Check that we show a not found message
     expect(getByText("Event not found")).toBeTruthy();

@@ -12,11 +12,16 @@ import "react-native-reanimated";
 import { ProfileProvider } from "../context/ProfileContext";
 import { CalendarProvider } from "../context/CalendarContext";
 import { UserProvider } from "../context/UserContext";
-
+import { Provider as PaperProvider, MD3LightTheme } from "react-native-paper";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Define a basic theme without custom variants
+const theme = {
+  ...MD3LightTheme,
+};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -35,21 +40,23 @@ export default function RootLayout() {
   }
 
   return (
-    <UserProvider>
-      <ProfileProvider>
-        <CalendarProvider>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="profile" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </CalendarProvider>
-      </ProfileProvider>
-    </UserProvider>
+    <PaperProvider theme={theme}>
+      <UserProvider>
+        <ProfileProvider>
+          <CalendarProvider>
+            <ThemeProvider
+              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+            >
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="profile" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </CalendarProvider>
+        </ProfileProvider>
+      </UserProvider>
+    </PaperProvider>
   );
 }
