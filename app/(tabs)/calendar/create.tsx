@@ -209,7 +209,7 @@ export default function CreateEventScreen() {
 
         {/* Date Picker */}
         <View style={styles.datePickerContainer}>
-          <Text variant="labelLarge" style={styles.label}>
+          <Text style={[styles.label, { fontWeight: "bold", fontSize: 16 }]}>
             Date:
           </Text>
           <View style={styles.datePickerButton}>
@@ -232,7 +232,7 @@ export default function CreateEventScreen() {
         {/* Time Pickers */}
         <View style={styles.timeContainer}>
           <View style={styles.timePickerContainer}>
-            <Text variant="labelLarge" style={styles.label}>
+            <Text style={[styles.label, { fontWeight: "bold", fontSize: 16 }]}>
               Start Time:
             </Text>
             <View style={styles.timePickerButton}>
@@ -257,7 +257,7 @@ export default function CreateEventScreen() {
           </View>
 
           <View style={styles.timePickerContainer}>
-            <Text variant="labelLarge" style={styles.label}>
+            <Text style={[styles.label, { fontWeight: "bold", fontSize: 16 }]}>
               End Time:
             </Text>
             <View style={styles.timePickerButton}>
@@ -300,7 +300,9 @@ export default function CreateEventScreen() {
 
         <Divider style={styles.divider} />
 
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text
+          style={[styles.sectionTitle, { fontWeight: "bold", fontSize: 16 }]}
+        >
           Visibility
         </Text>
 

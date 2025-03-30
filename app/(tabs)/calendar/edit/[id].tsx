@@ -168,7 +168,7 @@ export default function EditEventScreen() {
 
         {/* Date Picker */}
         <View style={styles.datePickerContainer}>
-          <Text variant="labelLarge" style={styles.label}>
+          <Text style={[styles.label, { fontWeight: "bold", fontSize: 16 }]}>
             Date:
           </Text>
           <View style={styles.datePickerButton}>
@@ -198,7 +198,7 @@ export default function EditEventScreen() {
         {/* Time Pickers */}
         <View style={styles.timeContainer}>
           <View style={styles.timePickerContainer}>
-            <Text variant="labelLarge" style={styles.label}>
+            <Text style={[styles.label, { fontWeight: "bold", fontSize: 16 }]}>
               Start Time:
             </Text>
             <View style={styles.timePickerButton}>
@@ -226,7 +226,7 @@ export default function EditEventScreen() {
           </View>
 
           <View style={styles.timePickerContainer}>
-            <Text variant="labelLarge" style={styles.label}>
+            <Text style={[styles.label, { fontWeight: "bold", fontSize: 16 }]}>
               End Time:
             </Text>
             <View style={styles.timePickerButton}>
@@ -276,7 +276,9 @@ export default function EditEventScreen() {
 
         <Divider style={styles.divider} />
 
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text
+          style={[styles.sectionTitle, { fontWeight: "bold", fontSize: 16 }]}
+        >
           Visibility
         </Text>
 
@@ -361,9 +363,9 @@ export default function EditEventScreen() {
         >
           <Dialog.Title>Delete Event</Dialog.Title>
           <Dialog.Content>
-            <Text variant="bodyMedium">
-              Are you sure you want to delete "{event.title}"? This action
-              cannot be undone.
+            <Text style={{ fontSize: 14 }}>
+              Are you sure you want to delete this event? This action cannot be
+              undone.
             </Text>
           </Dialog.Content>
           <Dialog.Actions>

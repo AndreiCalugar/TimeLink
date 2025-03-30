@@ -52,7 +52,7 @@ export default function EventAttendees({
 
   return (
     <View style={styles.container}>
-      <Text variant="titleMedium" style={styles.title}>
+      <Text style={[styles.title, { fontWeight: "bold", fontSize: 16 }]}>
         Attendees
       </Text>
 

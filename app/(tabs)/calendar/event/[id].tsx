@@ -218,7 +218,7 @@ export default function EventDetailsScreen() {
                 color={theme.colors.primary}
                 style={styles.detailIcon}
               />
-              <Text variant="bodyLarge">{formattedDate}</Text>
+              <Text style={{ fontSize: 16 }}>{formattedDate}</Text>
             </View>
 
             {(event.startTime || event.endTime) && (
@@ -229,7 +229,7 @@ export default function EventDetailsScreen() {
                   color={theme.colors.primary}
                   style={styles.detailIcon}
                 />
-                <Text variant="bodyLarge">{getTimePeriod()}</Text>
+                <Text style={{ fontSize: 16 }}>{getTimePeriod()}</Text>
               </View>
             )}
 
@@ -241,7 +241,7 @@ export default function EventDetailsScreen() {
                   color={theme.colors.primary}
                   style={styles.detailIcon}
                 />
-                <Text variant="bodyLarge">{event.location}</Text>
+                <Text style={{ fontSize: 16 }}>{event.location}</Text>
               </View>
             )}
           </View>
@@ -250,12 +250,15 @@ export default function EventDetailsScreen() {
 
           {event.description && (
             <View style={styles.descriptionSection}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { fontWeight: "bold", fontSize: 16 },
+                ]}
+              >
                 Description
               </Text>
-              <Text variant="bodyMedium" style={styles.description}>
-                {event.description}
-              </Text>
+              <Text style={styles.description}>{event.description}</Text>
             </View>
           )}
 
@@ -305,7 +308,7 @@ export default function EventDetailsScreen() {
         >
           <Dialog.Title>Delete Event</Dialog.Title>
           <Dialog.Content>
-            <Text variant="bodyMedium">
+            <Text style={{ fontSize: 14 }}>
               Are you sure you want to delete "{event.title}"? This action
               cannot be undone.
             </Text>
