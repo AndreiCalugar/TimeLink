@@ -51,8 +51,8 @@ interface MarkedDates {
 
 // Define valid routes for type safety
 const Routes = {
-  eventDetails: (id: string) => `/event/${id}` as const,
-  createEvent: "/create" as const,
+  eventDetails: (id: string) => `/calendar/event/${id}` as const,
+  createEvent: "/calendar/create" as const,
 };
 
 export default function CalendarScreen() {
