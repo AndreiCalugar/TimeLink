@@ -155,7 +155,7 @@ export default function EditEventScreen() {
         }}
       />
       <ScrollView style={styles.container}>
-        <Text variant="headlineMedium" style={styles.title}>
+        <Text style={[styles.title, { fontSize: 24, fontWeight: "bold" }]}>
           Edit Event
         </Text>
 

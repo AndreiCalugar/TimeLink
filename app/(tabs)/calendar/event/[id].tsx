@@ -154,7 +154,9 @@ export default function EventDetailsScreen() {
               style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
             />
           </View>
-          <Text variant="headlineMedium" style={styles.headerTitle}>
+          <Text
+            style={[styles.headerTitle, { fontSize: 24, fontWeight: "bold" }]}
+          >
             {event.title}
           </Text>
 

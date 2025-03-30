@@ -26,7 +26,7 @@ export default function ProfileHeader({
           style={styles.profilePicture}
         />
       )}
-      <Text variant="headlineMedium" style={styles.name}>
+      <Text style={[styles.name, { fontSize: 24, fontWeight: "bold" }]}>
         {name}
       </Text>
       {bio && <Text style={styles.bio}>{bio}</Text>}
