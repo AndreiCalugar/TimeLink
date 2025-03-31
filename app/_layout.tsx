@@ -12,6 +12,7 @@ import "react-native-reanimated";
 import { ProfileProvider } from "../context/ProfileContext";
 import { CalendarProvider } from "../context/CalendarContext";
 import { UserProvider } from "../context/UserContext";
+import { DiscoveryProvider } from "../context/DiscoveryContext";
 import {
   Provider as PaperProvider,
   MD3LightTheme,
@@ -66,16 +67,24 @@ export default function RootLayout() {
       <UserProvider>
         <ProfileProvider>
           <CalendarProvider>
-            <ThemeProvider
-              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-            >
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="profile" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <StatusBar style="auto" />
-            </ThemeProvider>
+            <DiscoveryProvider>
+              <ThemeProvider
+                value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+              >
+                <Stack>
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="profile"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style="auto" />
+              </ThemeProvider>
+            </DiscoveryProvider>
           </CalendarProvider>
         </ProfileProvider>
       </UserProvider>
