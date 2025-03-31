@@ -4,6 +4,7 @@ import { Text, Card, Chip, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { DiscoveryEvent } from "../../context/DiscoveryContext";
 import { format, isToday, isTomorrow } from "date-fns";
+import FriendsAttending from "./FriendsAttending";
 
 interface DiscoveryEventCardProps {
   event: DiscoveryEvent;
@@ -95,6 +96,11 @@ export default function DiscoveryEventCard({
           </Text>
         )}
 
+        {/* Friends Attending */}
+        {event.friendsAttending && event.friendsAttending.length > 0 && (
+          <FriendsAttending eventId={event.id} maxDisplay={3} />
+        )}
+
         {/* Bottom row with attendance info and categories */}
         <View style={styles.bottomRow}>
           {/* Attendance info */}
@@ -103,22 +109,6 @@ export default function DiscoveryEventCard({
               <Chip icon="account-group" style={styles.chip}>
                 {event.attendingCount} attending
               </Chip>
-            )}
-
-            {event.friendsAttending && event.friendsAttending.length > 0 && (
-              <View style={styles.friendsAttending}>
-                <MaterialCommunityIcons
-                  name="account-multiple"
-                  size={16}
-                  color={theme.colors.primary}
-                />
-                <Text
-                  style={[styles.friendsText, { color: theme.colors.primary }]}
-                >
-                  {event.friendsAttending.length} friend
-                  {event.friendsAttending.length > 1 ? "s" : ""}
-                </Text>
-              </View>
             )}
           </View>
 

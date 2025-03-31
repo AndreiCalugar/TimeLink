@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { CalendarEvent } from "./CalendarContext";
+import { CalendarEvent, EventVisibility } from "./CalendarContext";
 import { useUser } from "./UserContext";
 
 // Define an extended event type with discovery-specific properties
 export interface DiscoveryEvent extends CalendarEvent {
   attendingCount?: number;
-  friendsAttending?: string[]; // IDs of friends attending
+  friendsAttending?: { id: string; name: string; profilePicture?: string }[]; // Updated to include friend details
   category?: string; // Event category like "sports", "music", etc.
   image?: string; // URL for event image
 }
@@ -25,6 +25,7 @@ interface DiscoveryContextType {
     radius: number
   ) => DiscoveryEvent[];
   getEventsByDate: (date: string) => DiscoveryEvent[];
+  getMutualEvents: (friendId: string) => DiscoveryEvent[];
 }
 
 const DiscoveryContext = createContext<DiscoveryContextType | undefined>(
@@ -80,43 +81,83 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
       "Convention Center",
     ];
 
-    // Generate 30 mock events
-    return Array.from({ length: 30 }, (_, i) => {
+    // Mock friends data (simplified)
+    const mockFriends = [
+      {
+        id: "friend1",
+        name: "Alex Johnson",
+        profilePicture: "https://randomuser.me/api/portraits/men/1.jpg",
+      },
+      {
+        id: "friend2",
+        name: "Emma Smith",
+        profilePicture: "https://randomuser.me/api/portraits/women/2.jpg",
+      },
+      {
+        id: "friend3",
+        name: "Michael Brown",
+        profilePicture: "https://randomuser.me/api/portraits/men/3.jpg",
+      },
+      {
+        id: "friend4",
+        name: "Olivia Davis",
+        profilePicture: "https://randomuser.me/api/portraits/women/4.jpg",
+      },
+      {
+        id: "friend5",
+        name: "William Wilson",
+        profilePicture: "https://randomuser.me/api/portraits/men/5.jpg",
+      },
+    ];
+
+    // Generate 50 mock events
+    return Array.from({ length: 50 }, (_, i) => {
       const randomDate = dates[Math.floor(Math.random() * dates.length)];
       const randomCategory =
         categories[Math.floor(Math.random() * categories.length)];
       const randomLocation =
         locations[Math.floor(Math.random() * locations.length)];
-      const attendingCount = Math.floor(Math.random() * 50);
+      const attendingCount = Math.floor(Math.random() * 50) + 5; // 5-55 people
 
-      // Generate a time between 8AM and 10PM
-      const hour = 8 + Math.floor(Math.random() * 14);
-      const minute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, or 45
-      const startTime = `${hour.toString().padStart(2, "0")}:${minute
+      // Random time between 8am and 10pm
+      const randomHour = Math.floor(Math.random() * 14) + 8;
+      const randomMinute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, 45
+      const startTime = `${randomHour
+        .toString()
+        .padStart(2, "0")}:${randomMinute.toString().padStart(2, "0")}`;
+
+      // Random duration between 1-3 hours
+      const durationHours = Math.floor(Math.random() * 3) + 1;
+      let endHour = randomHour + durationHours;
+      const endTime = `${endHour.toString().padStart(2, "0")}:${randomMinute
         .toString()
         .padStart(2, "0")}`;
 
-      // End time is 1-3 hours after start
-      const endHour = hour + 1 + Math.floor(Math.random() * 2);
-      const endTime = `${endHour.toString().padStart(2, "0")}:${minute
-        .toString()
-        .padStart(2, "0")}`;
+      // Random friends attending (0-3 friends)
+      const friendsAttending = Array.from(
+        { length: Math.floor(Math.random() * 4) },
+        () => {
+          const randomFriend =
+            mockFriends[Math.floor(Math.random() * mockFriends.length)];
+          return randomFriend;
+        }
+      );
 
       return {
         id: `event-${i + 1}`,
-        title: `${
-          randomCategory.charAt(0).toUpperCase() + randomCategory.slice(1)
-        } Event ${i + 1}`,
-        description: `This is a ${randomCategory} event happening at ${randomLocation}. Join us for a great time!`,
+        title: `Event ${i + 1}`,
+        description: `Description for event ${
+          i + 1
+        }. This is a ${randomCategory} event happening at ${randomLocation}.`,
         date: randomDate,
         startTime,
         endTime,
         location: randomLocation,
-        visibility: "public",
-        category: randomCategory,
         attendingCount,
-        friendsAttending: attendingCount > 20 ? ["friend1", "friend2"] : [],
-        image: `https://source.unsplash.com/random/400x300?${randomCategory}`,
+        friendsAttending,
+        category: randomCategory,
+        image: `https://source.unsplash.com/random/300x200?${randomCategory}`,
+        visibility: "public",
       };
     });
   };
@@ -216,6 +257,12 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     return events.filter((event) => event.date === date);
   };
 
+  const getMutualEvents = (friendId: string): DiscoveryEvent[] => {
+    return events.filter((event) =>
+      event.friendsAttending?.some((friend) => friend.id === friendId)
+    );
+  };
+
   return (
     <DiscoveryContext.Provider
       value={{
@@ -229,6 +276,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
         getEventsByCategory,
         getEventsByLocation,
         getEventsByDate,
+        getMutualEvents,
       }}
     >
       {children}
