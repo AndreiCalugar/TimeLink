@@ -18,7 +18,9 @@ import {
 import { router } from "expo-router";
 import { useDiscovery } from "../../../context/DiscoveryContext";
 import DiscoveryEventCard from "../../../components/discovery/DiscoveryEventCard";
-import FilterModal from "../../../components/discovery/FilterModal";
+import FilterModal, {
+  FilterOptions,
+} from "../../../components/discovery/FilterModal";
 import { CalendarEvent } from "../../../context/CalendarContext";
 
 export default function DiscoveryScreen() {
@@ -27,6 +29,12 @@ export default function DiscoveryScreen() {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({
+    categories: [],
+    dateRange: "all",
+    attendees: "any",
+    sortBy: "relevance",
+  });
 
   // Filtered events based on search and category filters
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
@@ -76,8 +84,80 @@ export default function DiscoveryScreen() {
       );
     }
 
+    // Apply category filters
+    if (appliedFilters.categories.length > 0) {
+      result = result.filter(
+        (event) =>
+          event.category && appliedFilters.categories.includes(event.category)
+      );
+    }
+
+    // Apply date range filter from modal
+    if (appliedFilters.dateRange !== "all") {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+
+      const todayStr = today.toISOString().split("T")[0];
+      const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+      if (appliedFilters.dateRange === "today") {
+        result = result.filter((event) => event.date === todayStr);
+      } else if (appliedFilters.dateRange === "tomorrow") {
+        result = result.filter((event) => event.date === tomorrowStr);
+      } else if (appliedFilters.dateRange === "this-week") {
+        // Calculate dates for this week
+        const startOfWeek = new Date(today);
+        const daysSinceMonday = (today.getDay() + 6) % 7; // Adjust if week starts on Monday
+        startOfWeek.setDate(today.getDate() - daysSinceMonday);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        result = result.filter((event) => {
+          const eventDate = new Date(event.date);
+          return eventDate >= startOfWeek && eventDate <= endOfWeek;
+        });
+      } else if (appliedFilters.dateRange === "this-month") {
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+
+        result = result.filter((event) => {
+          const eventDate = new Date(event.date);
+          return (
+            eventDate.getMonth() === currentMonth &&
+            eventDate.getFullYear() === currentYear
+          );
+        });
+      }
+    }
+
+    // Apply attendees filter
+    if (appliedFilters.attendees !== "any") {
+      if (appliedFilters.attendees === "friends") {
+        result = result.filter(
+          (event) => event.friendsAttending && event.friendsAttending.length > 0
+        );
+      } else if (appliedFilters.attendees === "large") {
+        result = result.filter((event) => (event.attendingCount || 0) >= 20);
+      } else if (appliedFilters.attendees === "small") {
+        result = result.filter(
+          (event) =>
+            (event.attendingCount || 0) > 0 && (event.attendingCount || 0) < 20
+        );
+      }
+    }
+
+    // Apply sorting
+    if (appliedFilters.sortBy === "date") {
+      result.sort((a, b) => a.date.localeCompare(b.date));
+    } else if (appliedFilters.sortBy === "popularity") {
+      result.sort((a, b) => (b.attendingCount || 0) - (a.attendingCount || 0));
+    }
+    // Note: relevance and distance would need more complex implementations
+
     setFilteredEvents(result);
-  }, [events, searchQuery, selectedFilter]);
+  }, [events, searchQuery, selectedFilter, appliedFilters]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -87,6 +167,11 @@ export default function DiscoveryScreen() {
 
   const handleEventPress = (eventId: string) => {
     router.push(`/(tabs)/calendar/event/${eventId}`);
+  };
+
+  const handleApplyFilters = (filters: FilterOptions) => {
+    setAppliedFilters(filters);
+    setFilterModalVisible(false);
   };
 
   const renderEventCard = ({ item }: { item: CalendarEvent }) => (
@@ -132,6 +217,15 @@ export default function DiscoveryScreen() {
         />
       </View>
 
+      {/* Applied Filters Indicator */}
+      {appliedFilters.categories.length > 0 && (
+        <View style={styles.appliedFiltersContainer}>
+          <Text style={styles.appliedFiltersText}>
+            Filters applied: {appliedFilters.categories.join(", ")}
+          </Text>
+        </View>
+      )}
+
       {isLoading && !refreshing ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" />
@@ -163,7 +257,8 @@ export default function DiscoveryScreen() {
       <FilterModal
         visible={filterModalVisible}
         onDismiss={() => setFilterModalVisible(false)}
-        onApply={() => setFilterModalVisible(false)}
+        onApply={handleApplyFilters}
+        initialFilters={appliedFilters}
       />
     </View>
   );
@@ -199,6 +294,15 @@ const styles = StyleSheet.create({
   },
   segmentedButtons: {
     flex: 1,
+  },
+  appliedFiltersContainer: {
+    backgroundColor: "#e3f2fd",
+    padding: 8,
+    paddingHorizontal: 16,
+  },
+  appliedFiltersText: {
+    fontSize: 14,
+    color: "#1976d2",
   },
   loadingContainer: {
     flex: 1,

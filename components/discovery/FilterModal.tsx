@@ -12,24 +12,41 @@ import {
 } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+export interface FilterOptions {
+  categories: string[];
+  dateRange: string;
+  attendees: string;
+  sortBy: string;
+}
+
 interface FilterModalProps {
   visible: boolean;
   onDismiss: () => void;
-  onApply: () => void;
+  onApply: (filters: FilterOptions) => void;
+  initialFilters?: FilterOptions;
 }
 
 export default function FilterModal({
   visible,
   onDismiss,
   onApply,
+  initialFilters,
 }: FilterModalProps) {
   const theme = useTheme();
 
   // Default filter options
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [dateRange, setDateRange] = useState<string>("all");
-  const [attendees, setAttendees] = useState<string>("any");
-  const [sortBy, setSortBy] = useState<string>("relevance");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    initialFilters?.categories || []
+  );
+  const [dateRange, setDateRange] = useState<string>(
+    initialFilters?.dateRange || "all"
+  );
+  const [attendees, setAttendees] = useState<string>(
+    initialFilters?.attendees || "any"
+  );
+  const [sortBy, setSortBy] = useState<string>(
+    initialFilters?.sortBy || "relevance"
+  );
 
   // Available categories
   const categories = [
@@ -62,6 +79,17 @@ export default function FilterModal({
     setDateRange("all");
     setAttendees("any");
     setSortBy("relevance");
+  };
+
+  // Handle apply button click
+  const handleApply = () => {
+    const filters: FilterOptions = {
+      categories: selectedCategories,
+      dateRange,
+      attendees,
+      sortBy,
+    };
+    onApply(filters);
   };
 
   return (
@@ -173,7 +201,7 @@ export default function FilterModal({
           </Button>
           <Button
             mode="contained"
-            onPress={onApply}
+            onPress={handleApply}
             style={styles.footerButton}
           >
             Apply Filters

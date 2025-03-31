@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "test:calendar": "jest --testMatch=\"**/__tests__/**/calendar/**/*.[jt]s?(x)\" --watch",
+    "test:discovery": "jest --testPathPattern=discovery --watchAll=false",
     "lint": "expo lint"
   },
   "jest": {
