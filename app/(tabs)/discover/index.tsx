@@ -22,6 +22,10 @@ import FilterModal, {
   FilterOptions,
 } from "../../../components/discovery/FilterModal";
 import { CalendarEvent } from "../../../context/CalendarContext";
+import EmptyState from "../../../components/ui/EmptyState";
+import LoadingScreen from "../../../components/ui/LoadingScreen";
+import AppHeader from "../../../components/ui/AppHeader";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DiscoveryScreen() {
   const { events, isLoading, refreshEvents } = useDiscovery();
@@ -188,8 +192,9 @@ export default function DiscoveryScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Search and Filter Bar */}
+    <SafeAreaView style={styles.container} edges={["right", "left"]}>
+      <AppHeader title="Discover" />
+
       <View style={styles.searchContainer}>
         <Searchbar
           placeholder="Search events"
@@ -198,9 +203,8 @@ export default function DiscoveryScreen() {
           style={styles.searchBar}
         />
         <Button
-          mode="contained-tonal"
+          mode="contained"
           onPress={() => setFilterModalVisible(true)}
-          icon="filter-variant"
           style={styles.filterButton}
         >
           Filters
@@ -227,10 +231,7 @@ export default function DiscoveryScreen() {
       )}
 
       {isLoading && !refreshing ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
-          <Text style={styles.loadingText}>Loading events...</Text>
-        </View>
+        <LoadingScreen message="Loading events..." />
       ) : (
         <FlatList
           data={filteredEvents}
@@ -243,12 +244,11 @@ export default function DiscoveryScreen() {
           }
           ListHeaderComponent={() => renderSectionHeader("Events Near You")}
           ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No events found</Text>
-              <Text style={styles.emptySubtext}>
-                Try changing your filters or search terms
-              </Text>
-            </View>
+            <EmptyState
+              title="No events found"
+              message="Try changing your filters or search terms"
+              icon="calendar-blank"
+            />
           )}
         />
       )}
@@ -260,7 +260,7 @@ export default function DiscoveryScreen() {
         onApply={handleApplyFilters}
         initialFilters={appliedFilters}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -20,6 +20,7 @@ const MAPPING = {
   "chevron.right": "chevron-right",
   calendar: "calendar-today",
   "person.fill": "person",
+  "person.2.fill": "people",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],

@@ -6,7 +6,6 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { ProfileProvider } from "../context/ProfileContext";
@@ -19,6 +18,8 @@ import {
   configureFonts,
 } from "react-native-paper";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import StatusBarManager from "../components/ui/StatusBarManager";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -64,30 +65,32 @@ export default function RootLayout() {
 
   return (
     <PaperProvider theme={theme}>
-      <UserProvider>
-        <ProfileProvider>
-          <CalendarProvider>
-            <DiscoveryProvider>
-              <ThemeProvider
-                value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-              >
-                <Stack>
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="profile"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-                <StatusBar style="auto" />
-              </ThemeProvider>
-            </DiscoveryProvider>
-          </CalendarProvider>
-        </ProfileProvider>
-      </UserProvider>
+      <SafeAreaProvider>
+        <UserProvider>
+          <ProfileProvider>
+            <CalendarProvider>
+              <DiscoveryProvider>
+                <ThemeProvider
+                  value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+                >
+                  <Stack>
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="profile"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                  <StatusBarManager />
+                </ThemeProvider>
+              </DiscoveryProvider>
+            </CalendarProvider>
+          </ProfileProvider>
+        </UserProvider>
+      </SafeAreaProvider>
     </PaperProvider>
   );
 }

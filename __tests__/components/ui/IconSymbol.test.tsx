@@ -16,6 +16,7 @@ describe("IconSymbol", () => {
       "paperplane.fill",
       "calendar",
       "person.fill",
+      "person.2.fill",
       "chevron.right",
     ];
 
