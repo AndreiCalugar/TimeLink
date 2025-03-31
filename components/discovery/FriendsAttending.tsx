@@ -28,11 +28,14 @@ export default function FriendsAttending({
   const remainingCount = attendingFriends.length - displayFriends.length;
 
   const handlePress = (friend: FriendExtended) => {
-    router.push("/(tabs)/profile");
+    router.push({
+      pathname: "/(tabs)/friends/friend/[friendId]",
+      params: { friendId: friend.id },
+    });
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="friends-attending-container">
       <Text style={[styles.title, { color: theme.colors.primary }]}>
         Friends attending
       </Text>
@@ -43,6 +46,7 @@ export default function FriendsAttending({
             key={friend.id}
             style={styles.friendItem}
             onPress={() => handlePress(friend)}
+            testID="friend-avatar"
           >
             {friend.profilePicture ? (
               <Avatar.Image
