@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -14,8 +14,9 @@ import {
   Button,
   Divider,
   SegmentedButtons,
+  FAB,
 } from "react-native-paper";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useDiscovery } from "../../../context/DiscoveryContext";
 import DiscoveryEventCard from "../../../components/discovery/DiscoveryEventCard";
 import FilterModal, {
@@ -26,6 +27,13 @@ import EmptyState from "../../../components/ui/EmptyState";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import AppHeader from "../../../components/ui/AppHeader";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// Define valid routes for type safety
+const Routes = {
+  eventDetails: (id: string) => `/(tabs)/discover/event/${id}` as const,
+  createEvent: "/(tabs)/discover/create" as const,
+  editEvent: (id: string) => `/(tabs)/discover/edit/${id}` as const,
+};
 
 export default function DiscoveryScreen() {
   const { events, isLoading, refreshEvents } = useDiscovery();
@@ -42,6 +50,31 @@ export default function DiscoveryScreen() {
 
   // Filtered events based on search and category filters
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
+
+  // Track the last refresh time to prevent too frequent refreshes
+  const lastRefreshTime = useRef<number>(0);
+
+  // Refresh events when the screen comes into focus, but limit frequency
+  useFocusEffect(
+    useCallback(() => {
+      const refreshData = async () => {
+        const now = Date.now();
+        // Only refresh if it's been more than 10 seconds since the last refresh
+        if (now - lastRefreshTime.current > 10000) {
+          setRefreshing(true);
+          await refreshEvents();
+          setRefreshing(false);
+          lastRefreshTime.current = now;
+        }
+      };
+
+      refreshData();
+
+      return () => {
+        // Cleanup function if needed
+      };
+    }, [refreshEvents])
+  );
 
   // Categories for quick filter
   const timeFilters = [
@@ -164,13 +197,22 @@ export default function DiscoveryScreen() {
   }, [events, searchQuery, selectedFilter, appliedFilters]);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await refreshEvents();
-    setRefreshing(false);
+    const now = Date.now();
+    // Only allow manual refresh if it's been more than 10 seconds since the last refresh
+    if (now - lastRefreshTime.current > 10000) {
+      setRefreshing(true);
+      await refreshEvents();
+      setRefreshing(false);
+      lastRefreshTime.current = now;
+    } else {
+      // Simulate a refresh without actually calling the API
+      setRefreshing(true);
+      setTimeout(() => setRefreshing(false), 500);
+    }
   };
 
   const handleEventPress = (eventId: string) => {
-    router.push(`/(tabs)/calendar/event/${eventId}`);
+    router.push(Routes.eventDetails(eventId) as any);
   };
 
   const handleApplyFilters = (filters: FilterOptions) => {
@@ -193,7 +235,11 @@ export default function DiscoveryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["right", "left"]}>
-      <AppHeader title="Discover" />
+      <AppHeader
+        title="Discover"
+        rightActionIcon="plus"
+        onRightActionPress={() => router.push(Routes.createEvent as any)}
+      />
 
       <View style={styles.searchContainer}>
         <Searchbar
@@ -252,6 +298,14 @@ export default function DiscoveryScreen() {
           )}
         />
       )}
+
+      {/* Create Event FAB */}
+      <FAB
+        icon="plus"
+        style={styles.fab}
+        onPress={() => router.push(Routes.createEvent as any)}
+        label="Create Event"
+      />
 
       {/* Filter Modal */}
       <FilterModal
@@ -340,5 +394,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     textAlign: "center",
+  },
+  fab: {
+    position: "absolute",
+    margin: 16,
+    right: 0,
+    bottom: 0,
   },
 });
