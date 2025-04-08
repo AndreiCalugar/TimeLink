@@ -46,6 +46,7 @@ import {
 import EventAttendees from "../../../../components/calendar/EventAttendees";
 import LoadingScreen from "../../../../components/ui/LoadingScreen";
 import EmptyState from "../../../../components/ui/EmptyState";
+import AppHeader from "../../../../components/ui/AppHeader";
 
 type RecurrenceType = "none" | "daily" | "weekly" | "monthly";
 
@@ -378,16 +379,16 @@ export default function EditEventScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "Edit Event",
-          headerTintColor: "#fff",
-          headerStyle: { backgroundColor: theme.colors.primary },
-        }}
+    <View style={styles.container}>
+      <AppHeader
+        title="Edit Event"
+        showBackButton={true}
+        backDestination="/(tabs)/discover"
+        rightActionIcon="check"
+        onRightActionPress={handleUpdateEvent}
       />
 
-      <ScrollView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Cover Image */}
         <View style={styles.coverImageContainer}>
           {coverImage ? (
@@ -680,7 +681,7 @@ export default function EditEventScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
-    </>
+    </View>
   );
 }
 
@@ -836,5 +837,8 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     borderColor: "red",
+  },
+  scrollContent: {
+    padding: 16,
   },
 });

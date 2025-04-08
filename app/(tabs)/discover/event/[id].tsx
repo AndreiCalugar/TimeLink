@@ -29,6 +29,7 @@ import { useFriends } from "../../../../context/FriendsContext";
 import { DiscoveryEvent } from "../../../../context/DiscoveryContext";
 import { useUser } from "../../../../context/UserContext";
 import EmptyState from "../../../../components/ui/EmptyState";
+import AppHeader from "../../../../components/ui/AppHeader";
 
 type RsvpStatus = "going" | "maybe" | "not-going" | "none";
 
@@ -120,12 +121,17 @@ export default function EventDetailScreen() {
   if (!event) {
     return (
       <View style={styles.container}>
+        <AppHeader
+          title="Event Details"
+          showBackButton={true}
+          backDestination="/(tabs)/discover"
+        />
         <EmptyState
           title="Event Not Found"
           message="The event you're looking for doesn't exist or has been removed."
           icon="calendar-remove"
           buttonText="Back to Discover"
-          onButtonPress={() => router.back()}
+          onButtonPress={() => router.push("/(tabs)/discover")}
         />
       </View>
     );
@@ -224,28 +230,16 @@ export default function EventDetailScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "Event Details",
-          headerTintColor: "#fff",
-          headerStyle: { backgroundColor: theme.colors.primary },
-          headerRight: () => (
-            <IconButton
-              icon="pencil"
-              iconColor="#fff"
-              onPress={() =>
-                router.push({
-                  pathname: "/(tabs)/discover/edit/[id]",
-                  params: { id },
-                })
-              }
-            />
-          ),
-        }}
+    <View style={styles.container}>
+      <AppHeader
+        title="Event Details"
+        showBackButton={true}
+        backDestination="/(tabs)/discover"
+        rightActionIcon="share-variant"
+        onRightActionPress={handleShareEvent}
       />
 
-      <ScrollView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Event Header/Image */}
         {event.image ? (
           <Image source={{ uri: event.image }} style={styles.coverImage} />
@@ -453,7 +447,7 @@ export default function EventDetailScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
-    </>
+    </View>
   );
 }
 
@@ -560,5 +554,8 @@ const styles = StyleSheet.create({
   },
   rsvpButton: {
     marginBottom: 12,
+  },
+  scrollContent: {
+    padding: 16,
   },
 });

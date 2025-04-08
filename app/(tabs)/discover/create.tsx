@@ -32,6 +32,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, parse, addMonths, addWeeks, addDays } from "date-fns";
 import EventAttendees from "../../../components/calendar/EventAttendees";
+import AppHeader from "../../../components/ui/AppHeader";
 
 type RecurrenceType = "none" | "daily" | "weekly" | "monthly";
 
@@ -322,16 +323,16 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: "Create Event",
-          headerStyle: { backgroundColor: theme.colors.primary },
-          headerTintColor: "#fff",
-        }}
+    <View style={styles.container}>
+      <AppHeader
+        title="Create Event"
+        showBackButton={true}
+        backDestination="/(tabs)/discover"
+        rightActionIcon="check"
+        onRightActionPress={handleCreateEvent}
       />
 
-      <ScrollView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Cover Image */}
         <View style={styles.coverImageContainer}>
           {coverImage ? (
@@ -764,7 +765,7 @@ export default function CreateEventScreen() {
           </Button>
         </View>
       </ScrollView>
-    </>
+    </View>
   );
 }
 
@@ -930,5 +931,8 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     paddingVertical: 8,
+  },
+  scrollContent: {
+    padding: 16,
   },
 });

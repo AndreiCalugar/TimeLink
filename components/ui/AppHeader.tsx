@@ -11,6 +11,8 @@ interface AppHeaderProps {
   secondaryRightActionIcon?: string;
   onSecondaryRightActionPress?: () => void;
   elevated?: boolean;
+  backDestination?: any;
+  onBackPress?: () => void;
 }
 
 export default function AppHeader({
@@ -21,16 +23,31 @@ export default function AppHeader({
   secondaryRightActionIcon,
   onSecondaryRightActionPress,
   elevated = true,
+  backDestination,
+  onBackPress,
 }: AppHeaderProps) {
   const router = useRouter();
   const theme = useTheme();
+
+  const handleBackPress = () => {
+    if (onBackPress) {
+      // Use custom back handler if provided
+      onBackPress();
+    } else if (backDestination) {
+      // Navigate to specific destination if provided
+      router.push(backDestination);
+    } else {
+      // Default behavior: go back to previous screen
+      router.back();
+    }
+  };
 
   return (
     <Appbar.Header
       elevated={elevated}
       style={[styles.header, { backgroundColor: theme.colors.surface }]}
     >
-      {showBackButton && <Appbar.BackAction onPress={() => router.back()} />}
+      {showBackButton && <Appbar.BackAction onPress={handleBackPress} />}
       <Appbar.Content title={title} titleStyle={styles.title} />
 
       {secondaryRightActionIcon && (

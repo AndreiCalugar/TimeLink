@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { useFriends } from "../../../context/FriendsContext";
 import { FriendSuggestion } from "../../../context/FriendsContext";
 import EmptyState from "../../../components/ui/EmptyState";
+import AppHeader from "../../../components/ui/AppHeader";
 
 export default function FriendSuggestionsScreen() {
   const theme = useTheme();
@@ -107,10 +108,11 @@ export default function FriendSuggestionsScreen() {
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Suggested Friends" />
-      </Appbar.Header>
+      <AppHeader
+        title="Suggested Friends"
+        showBackButton={true}
+        backDestination="/(tabs)/friends"
+      />
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -131,7 +133,7 @@ export default function FriendSuggestionsScreen() {
           title="No Suggestions Found"
           message="We don't have any friend suggestions for you at the moment. Check back later!"
           buttonText="Go Back"
-          onButtonPress={() => router.back()}
+          onButtonPress={() => router.push("/(tabs)/friends")}
         />
       )}
     </View>

@@ -147,7 +147,11 @@ export default function FriendRequestsScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Friend Requests" showBackButton={true} />
+      <AppHeader
+        title="Friend Requests"
+        showBackButton={true}
+        backDestination="/(tabs)/friends"
+      />
 
       {friendRequests.length === 0 ? (
         <EmptyState

@@ -16,6 +16,7 @@ import { useFriends } from "../../../../context/FriendsContext";
 import LoadingScreen from "../../../../components/ui/LoadingScreen";
 import EmptyState from "../../../../components/ui/EmptyState";
 import MutualEvents from "../../../../components/friends/MutualEvents";
+import AppHeader from "../../../../components/ui/AppHeader";
 
 export default function FriendDetailScreen() {
   const theme = useTheme();
@@ -50,16 +51,17 @@ export default function FriendDetailScreen() {
   if (!friend) {
     return (
       <View style={styles.container}>
-        <Appbar.Header>
-          <Appbar.BackAction onPress={() => router.back()} />
-          <Appbar.Content title="Friend Details" />
-        </Appbar.Header>
+        <AppHeader
+          title="Friend Details"
+          showBackButton={true}
+          backDestination="/(tabs)/friends"
+        />
         <EmptyState
           icon="account-question"
           title="Friend Not Found"
           message="We couldn't find this friend in your list."
           buttonText="Go Back"
-          onButtonPress={() => router.back()}
+          onButtonPress={() => router.push("/(tabs)/friends")}
         />
       </View>
     );
@@ -69,11 +71,12 @@ export default function FriendDetailScreen() {
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Friend Details" />
-        <Appbar.Action icon="dots-vertical" onPress={() => {}} />
-      </Appbar.Header>
+      <AppHeader
+        title="Friend Details"
+        showBackButton={true}
+        backDestination="/(tabs)/friends"
+        rightActionIcon="dots-vertical"
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Header */}

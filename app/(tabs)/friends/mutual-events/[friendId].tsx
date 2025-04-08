@@ -7,6 +7,7 @@ import { useFriends } from "../../../../context/FriendsContext";
 import EmptyState from "../../../../components/ui/EmptyState";
 import LoadingScreen from "../../../../components/ui/LoadingScreen";
 import DiscoveryEventCard from "../../../../components/discovery/DiscoveryEventCard";
+import AppHeader from "../../../../components/ui/AppHeader";
 
 export default function MutualEventsScreen() {
   const theme = useTheme();
@@ -37,16 +38,13 @@ export default function MutualEventsScreen() {
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content
-          title={
-            friend
-              ? `Events with ${friend.name.split(" ")[0]}`
-              : "Mutual Events"
-          }
-        />
-      </Appbar.Header>
+      <AppHeader
+        title={
+          friend ? `Events with ${friend.name.split(" ")[0]}` : "Mutual Events"
+        }
+        showBackButton={true}
+        backDestination={`/(tabs)/friends/friend/${friendId}`}
+      />
 
       {mutualEvents.length === 0 ? (
         <EmptyState
