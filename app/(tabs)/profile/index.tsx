@@ -82,6 +82,11 @@ export default function ProfileScreen() {
     })
     .filter((item) => item.interest !== undefined);
 
+  // Add debug logging
+  console.log("User Interests:", userInterests.length);
+  console.log("Available Interests:", interests.length);
+  console.log("Mapped Interest Items:", userInterestItems.length);
+
   console.log("Rendering profile for:", profile.name);
 
   return (

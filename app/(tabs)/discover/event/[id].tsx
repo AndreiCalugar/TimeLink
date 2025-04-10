@@ -30,6 +30,7 @@ import { DiscoveryEvent } from "../../../../context/DiscoveryContext";
 import { useUser } from "../../../../context/UserContext";
 import EmptyState from "../../../../components/ui/EmptyState";
 import AppHeader from "../../../../components/ui/AppHeader";
+import { useToast } from "../../../../context/ToastContext";
 
 type RsvpStatus = "going" | "maybe" | "not-going" | "none";
 
@@ -39,6 +40,7 @@ export default function EventDetailScreen() {
   const theme = useTheme();
   const { events } = useDiscovery();
   const { user } = useUser();
+  const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [rsvpDialogVisible, setRsvpDialogVisible] = useState(false);
   const [userRsvp, setUserRsvp] = useState<RsvpStatus>("none");
@@ -65,21 +67,28 @@ export default function EventDetailScreen() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setUserRsvp(status);
 
-      // Show confirmation message
-      Alert.alert(
-        status === "going"
-          ? "You're going!"
-          : status === "maybe"
-          ? "Maybe attending"
-          : "Not attending",
-        status === "going"
-          ? "You've been added to the attendee list."
-          : status === "maybe"
-          ? "You've been added to the maybe list."
-          : "You've been removed from the attendee list."
-      );
+      // Show confirmation message using toast instead of Alert
+      showToast({
+        message:
+          status === "going"
+            ? "You're going to this event!"
+            : status === "maybe"
+            ? "You might attend this event"
+            : "You've declined this event",
+        type:
+          status === "going"
+            ? "success"
+            : status === "maybe"
+            ? "info"
+            : "warning",
+        duration: 3000,
+      });
     } catch (error) {
-      Alert.alert("Error", "Failed to update RSVP status. Please try again.");
+      showToast({
+        message: "Failed to update RSVP status. Please try again.",
+        type: "error",
+        duration: 4000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -113,8 +122,19 @@ export default function EventDetailScreen() {
         }${event.description || ""}`,
         title: event.title,
       });
+
+      showToast({
+        message: "Event shared successfully!",
+        type: "success",
+        duration: 2000,
+      });
     } catch (error) {
       console.error("Error sharing event:", error);
+      showToast({
+        message: "Could not share the event. Please try again.",
+        type: "error",
+        duration: 3000,
+      });
     }
   };
 

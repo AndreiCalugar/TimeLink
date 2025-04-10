@@ -1,0 +1,10 @@
+[33mb8b1264[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;32mfeature/event-management[m[33m)[m Fix navigation: Implement consistent back button behavior with AppHeader improvements
+[33m4d947ac[m Adding event management
+[33mbe86e82[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mfeature/friends-tab[m[33m)[m Add tests for FriendsContext and FriendsAttending component
+[33m7adefdb[m Implement Friends tab with friend list, requests, suggestions, and mutual events
+[33m87fc2bc[m[33m ([m[1;32mfeature/ui-polish[m[33m)[m UI polish: Add reusable components and consistent styling
+[33m27a4d76[m[33m ([m[1;32mfeature/discovery-feed[m[33m)[m Add test coverage for discovery components and resolve filter functionality
+[33m5b58851[m Add discovery feed feature with event card and filtering components
+[33mb247220[m[33m ([m[1;32mfeature/enhanced-profiles[m[33m)[m Add initial tests for profile components
+[33m8e266aa[m Enhanced profile feature with improved UI components and proper routing
+[33ma7d87f4[m[33m ([m[1;32mfeature/event-details[m[33m)[m Fix EventDetails test to work with PaperProvider and improve mocks

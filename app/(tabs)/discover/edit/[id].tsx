@@ -47,6 +47,7 @@ import EventAttendees from "../../../../components/calendar/EventAttendees";
 import LoadingScreen from "../../../../components/ui/LoadingScreen";
 import EmptyState from "../../../../components/ui/EmptyState";
 import AppHeader from "../../../../components/ui/AppHeader";
+import { useToast } from "../../../../context/ToastContext";
 
 type RecurrenceType = "none" | "daily" | "weekly" | "monthly";
 
@@ -56,6 +57,7 @@ export default function EditEventScreen() {
   const { id } = useLocalSearchParams();
   const { updateEvent, getEventById, deleteEvent } = useCalendarContext();
   const { events } = useDiscovery();
+  const { showToast } = useToast();
 
   // Find the event in the discovery events
   const discoveryEvent = events.find((e) => e.id === id) as
@@ -191,12 +193,20 @@ export default function EditEventScreen() {
   const handleUpdateEvent = async () => {
     // Validate form
     if (!title.trim()) {
-      Alert.alert("Error", "Event title is required");
+      showToast({
+        message: "Event title is required",
+        type: "error",
+        duration: 3000,
+      });
       return;
     }
 
     if (!date) {
-      Alert.alert("Error", "Event date is required");
+      showToast({
+        message: "Event date is required",
+        type: "error",
+        duration: 3000,
+      });
       return;
     }
 
@@ -216,15 +226,30 @@ export default function EditEventScreen() {
         coverImage ||
         `https://source.unsplash.com/random/300x200?${category || "event"}`,
       isAllDay,
+      color: isDeadTime
+        ? "#EA4335"
+        : visibility === "public"
+        ? "#4285F4"
+        : visibility === "friends"
+        ? "#34A853"
+        : "#FBBC05",
     };
 
     try {
       setIsLoading(true);
-      await updateEvent(event.id, updatedEvent);
-      Alert.alert("Success", "Event updated successfully");
+      await updateEvent(id as string, updatedEvent);
+      showToast({
+        message: "Event updated successfully",
+        type: "success",
+        duration: 3000,
+      });
       router.back();
     } catch (error) {
-      Alert.alert("Error", "Failed to update event. Please try again.");
+      showToast({
+        message: "Failed to update event. Please try again.",
+        type: "error",
+        duration: 4000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -237,14 +262,23 @@ export default function EditEventScreen() {
 
   // Handle delete event
   const handleDeleteConfirmed = async () => {
+    setDeleteDialogVisible(false);
+
     try {
       setIsLoading(true);
-      setDeleteDialogVisible(false);
-      await deleteEvent(event.id);
-      Alert.alert("Success", "Event deleted successfully");
+      await deleteEvent(id as string);
+      showToast({
+        message: "Event deleted successfully",
+        type: "success",
+        duration: 3000,
+      });
       router.back();
     } catch (error) {
-      Alert.alert("Error", "Failed to delete event. Please try again.");
+      showToast({
+        message: "Failed to delete event. Please try again.",
+        type: "error",
+        duration: 4000,
+      });
       setIsLoading(false);
     }
   };

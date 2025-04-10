@@ -13,6 +13,7 @@ import { CalendarProvider } from "../context/CalendarContext";
 import { UserProvider } from "../context/UserContext";
 import { DiscoveryProvider } from "../context/DiscoveryContext";
 import { FriendsProvider } from "../context/FriendsContext";
+import { ToastProvider } from "../context/ToastContext";
 import {
   Provider as PaperProvider,
   MD3LightTheme,
@@ -72,22 +73,24 @@ export default function RootLayout() {
             <CalendarProvider>
               <DiscoveryProvider>
                 <FriendsProvider>
-                  <ThemeProvider
-                    value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-                  >
-                    <Stack>
-                      <Stack.Screen
-                        name="(tabs)"
-                        options={{ headerShown: false }}
-                      />
-                      <Stack.Screen
-                        name="profile"
-                        options={{ headerShown: false }}
-                      />
-                      <Stack.Screen name="+not-found" />
-                    </Stack>
-                    <StatusBarManager />
-                  </ThemeProvider>
+                  <ToastProvider>
+                    <ThemeProvider
+                      value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+                    >
+                      <Stack>
+                        <Stack.Screen
+                          name="(tabs)"
+                          options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                          name="profile"
+                          options={{ headerShown: false }}
+                        />
+                        <Stack.Screen name="+not-found" />
+                      </Stack>
+                      <StatusBarManager />
+                    </ThemeProvider>
+                  </ToastProvider>
                 </FriendsProvider>
               </DiscoveryProvider>
             </CalendarProvider>

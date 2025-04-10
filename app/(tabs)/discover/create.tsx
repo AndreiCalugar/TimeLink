@@ -6,6 +6,7 @@ import {
   Platform,
   Image,
   Alert,
+  SafeAreaView,
 } from "react-native";
 import {
   TextInput,
@@ -21,6 +22,7 @@ import {
   Card,
   Avatar,
   TouchableRipple,
+  Title,
 } from "react-native-paper";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import {
@@ -33,6 +35,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, parse, addMonths, addWeeks, addDays } from "date-fns";
 import EventAttendees from "../../../components/calendar/EventAttendees";
 import AppHeader from "../../../components/ui/AppHeader";
+import { useToast } from "../../../context/ToastContext";
 
 type RecurrenceType = "none" | "daily" | "weekly" | "monthly";
 
@@ -41,6 +44,7 @@ export default function CreateEventScreen() {
   const theme = useTheme();
   const params = useLocalSearchParams();
   const { createEvent } = useCalendarContext();
+  const { showToast } = useToast();
 
   // Get the date from params or use today
   const initialDate =
@@ -114,12 +118,20 @@ export default function CreateEventScreen() {
   const handleCreateEvent = async () => {
     // Validate form
     if (!title.trim()) {
-      Alert.alert("Error", "Event title is required");
+      showToast({
+        message: "Event title is required",
+        type: "error",
+        duration: 3000,
+      });
       return;
     }
 
     if (!date) {
-      Alert.alert("Error", "Event date is required");
+      showToast({
+        message: "Event date is required",
+        type: "error",
+        duration: 3000,
+      });
       return;
     }
 
@@ -158,22 +170,31 @@ export default function CreateEventScreen() {
     // Handle recurring events
     if (isRecurring && recurrenceType !== "none" && recurrenceEndDate) {
       // In a real app, we would create a series of events or handle recurrence in the backend
-      // For this demo, we'll just show an alert
-      Alert.alert(
-        "Recurring Event",
-        `This event will recur ${recurrenceType} until ${format(
+      // For this demo, we'll just show a toast notification
+      showToast({
+        message: `This event will recur ${recurrenceType} until ${format(
           recurrenceEndDate,
           "MMMM d, yyyy"
-        )}`
-      );
+        )}`,
+        type: "info",
+        duration: 4000,
+      });
     }
 
     try {
       await createEvent(baseEvent);
-      Alert.alert("Success", "Event created successfully");
+      showToast({
+        message: "Event created successfully",
+        type: "success",
+        duration: 3000,
+      });
       router.back();
     } catch (error) {
-      Alert.alert("Error", "Failed to create event. Please try again.");
+      showToast({
+        message: "Failed to create event. Please try again.",
+        type: "error",
+        duration: 4000,
+      });
     }
   };
 
@@ -323,16 +344,17 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <AppHeader
         title="Create Event"
         showBackButton={true}
-        backDestination="/(tabs)/discover"
         rightActionIcon="check"
         onRightActionPress={handleCreateEvent}
       />
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Cover Image */}
         <View style={styles.coverImageContainer}>
           {coverImage ? (
@@ -571,10 +593,7 @@ export default function CreateEventScreen() {
             <Divider style={styles.divider} />
 
             <Text style={styles.sectionTitle}>Invite Friends</Text>
-            <EventAttendees
-              attendees={attendees}
-              onUpdateAttendees={setAttendees}
-            />
+            <EventAttendees attendees={attendees} onChange={setAttendees} />
           </View>
         )}
 
@@ -765,7 +784,7 @@ export default function CreateEventScreen() {
           </Button>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -934,5 +953,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+  },
+  scrollView: {
+    flex: 1,
   },
 });

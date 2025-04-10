@@ -188,6 +188,34 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({
           category: "Technology",
           icon: "laptop-code",
         },
+        // Adding predefined interests that are commonly used
+        {
+          id: "int-travel",
+          name: "Travel",
+          category: "Lifestyle",
+          icon: "airplane",
+        },
+        { id: "int-cooking", name: "Cooking", category: "Food", icon: "food" },
+        { id: "int-music", name: "Music", category: "Arts", icon: "music" },
+        {
+          id: "int-movies",
+          name: "Movies",
+          category: "Entertainment",
+          icon: "movie",
+        },
+        {
+          id: "int-sports",
+          name: "Sports",
+          category: "Activities",
+          icon: "basketball",
+        },
+        {
+          id: "int-gaming",
+          name: "Gaming",
+          category: "Entertainment",
+          icon: "gamepad-variant",
+        },
+        { id: "int-art", name: "Art", category: "Arts", icon: "palette" },
       ];
 
       const mockUserInterests: UserInterest[] = [
@@ -202,11 +230,9 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({
       setFriends(mockFriends);
       setInterests(mockInterests);
       setUserInterests(mockUserInterests);
+      setIsLoading(false);
 
-      // Simulate API loading
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
+      console.log("Profile data loaded");
     }
   }, [user]);
 
@@ -280,17 +306,33 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({
     level: "casual" | "enthusiast" | "expert" = "casual",
     isPrivate: boolean = false
   ) => {
-    const existingInterest = userInterests.find(
+    // First check if the interest exists in the interests array
+    const existingInterest = interests.find((i) => i.id === interestId);
+    if (!existingInterest) {
+      // If it doesn't exist in our interests array (like a predefined interest from the interests screen),
+      // create a placeholder interest with at least an id
+      setInterests((prev) => [
+        ...prev,
+        { id: interestId, name: interestId, category: "Custom", icon: "tag" },
+      ]);
+    }
+
+    // Then check if user already has this interest
+    const existingUserInterest = userInterests.find(
       (i) => i.interestId === interestId
     );
-    if (existingInterest) return;
+    if (existingUserInterest) return;
 
+    // Add the new user interest
     const newUserInterest: UserInterest = {
       interestId,
       level,
       private: isPrivate,
     };
     setUserInterests((prev) => [...prev, newUserInterest]);
+
+    // Log for debugging
+    console.log(`Added interest: ${interestId} with level: ${level}`);
   };
 
   const removeInterest = (interestId: string) => {
