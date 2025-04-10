@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { CalendarEvent, EventVisibility } from "./CalendarContext";
+import {
+  CalendarEvent,
+  EventVisibility,
+  useCalendarContext,
+} from "./CalendarContext";
 import { useUser } from "./UserContext";
+import { useFriends } from "./FriendsContext";
 
 // Define an extended event type with discovery-specific properties
 export interface DiscoveryEvent extends CalendarEvent {
@@ -43,6 +48,9 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   const [error, setError] = useState<string | null>(null);
 
   const { user } = useUser();
+  const calendarContext = useCalendarContext();
+  const { events: calendarEvents } = calendarContext;
+  const { friends } = useFriends();
 
   // Mock data for development
   const generateMockEvents = (): DiscoveryEvent[] => {
@@ -203,6 +211,109 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
 
     fetchEvents();
   }, [user?.id]); // Refetch when user changes
+
+  // Listen for calendar changes
+  useEffect(() => {
+    // Subscribe to calendar changes
+    const unsubscribe = calendarContext.addEventListener((event) => {
+      if (event.type === "create" || event.type === "update") {
+        // Get the event that was created or updated
+        const calEvent = calendarContext.getEventById(event.eventId);
+
+        if (calEvent && calEvent.attendees && calEvent.attendees.length > 0) {
+          // Check if we already have this event in our discovery events
+          const existingEventIndex = events.findIndex(
+            (e) => e.id === calEvent.id
+          );
+
+          // Convert attendees to friendsAttending
+          const friendsAttending = calEvent.attendees.map((attendeeName) => {
+            // Find the friend by name
+            const friend = friends.find((f) => f.name === attendeeName);
+            if (friend) {
+              return {
+                id: friend.id,
+                name: friend.name,
+                profilePicture: friend.profilePicture,
+              };
+            }
+            // If not found, create a placeholder
+            return {
+              id: `temp-${Math.random().toString(36).substring(2, 9)}`,
+              name: attendeeName,
+            };
+          });
+
+          // Create or update the discovery event
+          if (existingEventIndex >= 0) {
+            // Update existing event
+            const updatedEvents = [...events];
+            updatedEvents[existingEventIndex] = {
+              ...updatedEvents[existingEventIndex],
+              ...calEvent,
+              friendsAttending,
+              // Preserve discovery-specific fields
+              category: updatedEvents[existingEventIndex].category || "social",
+              attendingCount: calEvent.attendees?.length || 0,
+            };
+
+            setEvents(updatedEvents);
+
+            // Update in friendEvents too if it's there
+            const friendEventIndex = friendEvents.findIndex(
+              (e) => e.id === calEvent.id
+            );
+            if (friendEventIndex >= 0) {
+              const updatedFriendEvents = [...friendEvents];
+              updatedFriendEvents[friendEventIndex] = {
+                ...updatedFriendEvents[friendEventIndex],
+                ...calEvent,
+                friendsAttending,
+                category:
+                  updatedFriendEvents[friendEventIndex].category || "social",
+                attendingCount: calEvent.attendees?.length || 0,
+              };
+
+              setFriendEvents(updatedFriendEvents);
+            } else if (friendsAttending.length > 0) {
+              // Add to friendEvents if it has friends attending
+              setFriendEvents((prev) => [
+                ...prev,
+                {
+                  ...calEvent,
+                  friendsAttending,
+                  category: "social",
+                  attendingCount: calEvent.attendees?.length || 0,
+                } as DiscoveryEvent,
+              ]);
+            }
+          } else {
+            // Create new discovery event
+            const newDiscoveryEvent: DiscoveryEvent = {
+              ...calEvent,
+              friendsAttending,
+              category: "social", // Default category
+              attendingCount: calEvent.attendees?.length || 0,
+            };
+
+            setEvents((prev) => [...prev, newDiscoveryEvent]);
+
+            // Add to friendEvents if it has friends attending
+            if (friendsAttending.length > 0) {
+              setFriendEvents((prev) => [...prev, newDiscoveryEvent]);
+            }
+          }
+        }
+      } else if (event.type === "delete") {
+        // Remove the deleted event from our lists
+        setEvents((prev) => prev.filter((e) => e.id !== event.eventId));
+        setFriendEvents((prev) => prev.filter((e) => e.id !== event.eventId));
+      }
+    });
+
+    // Clean up subscription when component unmounts
+    return () => unsubscribe();
+  }, [calendarContext, friends, events, friendEvents]);
 
   const refreshEvents = async () => {
     setIsLoading(true);

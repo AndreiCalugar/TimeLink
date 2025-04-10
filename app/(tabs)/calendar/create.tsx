@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView, Platform } from "react-native";
 import {
   TextInput,
@@ -28,6 +28,9 @@ export default function CreateEventScreen() {
   const initialDate =
     (params.date as string) || new Date().toISOString().split("T")[0];
 
+  // Get friend data if coming from friend profile
+  const initialAttendees = params.initialAttendees as string;
+
   // Convert initialDate string to Date object
   const parsedInitialDate = parse(initialDate, "yyyy-MM-dd", new Date());
 
@@ -42,7 +45,17 @@ export default function CreateEventScreen() {
   const [location, setLocation] = useState("");
   const [visibility, setVisibility] = useState<EventVisibility>("public");
   const [isDeadTime, setIsDeadTime] = useState(false);
-  const [attendees, setAttendees] = useState<string[]>([]);
+  const [attendees, setAttendees] = useState<string[]>(
+    initialAttendees ? [initialAttendees] : []
+  );
+
+  // Initialize with friend's name in the title if coming from friend profile
+  useEffect(() => {
+    if (initialAttendees) {
+      // Set the visibility to friends by default when creating an event with a friend
+      setVisibility("friends");
+    }
+  }, [initialAttendees]);
 
   // State for showing/hiding date and time pickers
   const [showDatePicker, setShowDatePicker] = useState(false);

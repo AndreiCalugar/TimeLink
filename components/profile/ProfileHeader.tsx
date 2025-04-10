@@ -10,7 +10,7 @@ interface ProfileHeaderProps {
   coverPhoto?: string;
   location?: string;
   joinDate?: string;
-  onEdit: () => void;
+  onEdit?: () => void;
 }
 
 export default function ProfileHeader({
@@ -100,14 +100,16 @@ export default function ProfileHeader({
           )}
         </View>
 
-        <Button
-          mode="outlined"
-          onPress={onEdit}
-          icon="account-edit"
-          style={styles.editButton}
-        >
-          Edit Profile
-        </Button>
+        {onEdit && (
+          <Button
+            mode="outlined"
+            onPress={onEdit}
+            icon="account-edit"
+            style={styles.editButton}
+          >
+            Edit Profile
+          </Button>
+        )}
       </View>
     </View>
   );

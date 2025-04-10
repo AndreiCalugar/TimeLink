@@ -18,13 +18,24 @@ export interface CalendarEvent {
   attendees?: string[]; // list of user IDs
 }
 
+// Define a custom event type for calendar changes
+export interface CalendarChangeEvent {
+  type: "create" | "update" | "delete";
+  eventId: string;
+  eventDate: string;
+}
+
 type CalendarContextType = {
   events: Record<string, CalendarEvent[]>;
-  createEvent: (event: Omit<CalendarEvent, "id">) => Promise<void>;
+  createEvent: (event: Omit<CalendarEvent, "id">) => Promise<string>; // Return the ID of the created event
   updateEvent: (id: string, event: Partial<CalendarEvent>) => Promise<void>;
   deleteEvent: (id: string) => Promise<void>;
   getEventsByDate: (date: string) => CalendarEvent[];
   getEventById: (id: string) => CalendarEvent | undefined;
+  // Add a new field for event listeners
+  addEventListener: (
+    callback: (event: CalendarChangeEvent) => void
+  ) => () => void;
 };
 
 const CalendarContext = createContext<CalendarContextType | undefined>(
@@ -35,6 +46,27 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [events, setEvents] = useState<Record<string, CalendarEvent[]>>({});
+  // Add a state for change listeners
+  const [changeListeners, setChangeListeners] = useState<
+    ((event: CalendarChangeEvent) => void)[]
+  >([]);
+
+  // Notify listeners of calendar changes
+  const notifyListeners = (event: CalendarChangeEvent) => {
+    changeListeners.forEach((listener) => listener(event));
+  };
+
+  // Add event listener function
+  const addEventListener = (callback: (event: CalendarChangeEvent) => void) => {
+    setChangeListeners((prev) => [...prev, callback]);
+
+    // Return unsubscribe function
+    return () => {
+      setChangeListeners((prev) =>
+        prev.filter((listener) => listener !== callback)
+      );
+    };
+  };
 
   // Load initial mock data
   useEffect(() => {
@@ -120,10 +152,21 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({
         [eventData.date]: [...dateEvents, newEvent],
       };
     });
+
+    // Notify listeners of the new event
+    notifyListeners({
+      type: "create",
+      eventId: newEvent.id,
+      eventDate: eventData.date,
+    });
+
+    return newEvent.id; // Return the new event ID
   };
 
   // Update an existing event
   const updateEvent = async (id: string, eventData: Partial<CalendarEvent>) => {
+    let updatedDate = "";
+
     setEvents((prevEvents) => {
       const newEvents = { ...prevEvents };
 
@@ -131,6 +174,8 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({
       for (const date in newEvents) {
         const eventIndex = newEvents[date].findIndex((e) => e.id === id);
         if (eventIndex !== -1) {
+          updatedDate = date;
+
           // Update the event
           const updatedEvent = {
             ...newEvents[date][eventIndex],
@@ -145,6 +190,8 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({
             // Add to new date
             const newDateEvents = newEvents[eventData.date] || [];
             newEvents[eventData.date] = [...newDateEvents, updatedEvent];
+
+            updatedDate = eventData.date;
           } else {
             // Update in the same date
             newEvents[date][eventIndex] = updatedEvent;
@@ -156,10 +203,21 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return newEvents;
     });
+
+    // Notify listeners of the update
+    if (updatedDate) {
+      notifyListeners({
+        type: "update",
+        eventId: id,
+        eventDate: updatedDate,
+      });
+    }
   };
 
   // Delete an event
   const deleteEvent = async (id: string) => {
+    let deletedDate = "";
+
     setEvents((prevEvents) => {
       const newEvents = { ...prevEvents };
 
@@ -167,6 +225,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({
       for (const date in newEvents) {
         const filteredEvents = newEvents[date].filter((e) => e.id !== id);
         if (filteredEvents.length !== newEvents[date].length) {
+          deletedDate = date;
           newEvents[date] = filteredEvents;
           break;
         }
@@ -174,6 +233,15 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return newEvents;
     });
+
+    // Notify listeners of the deletion
+    if (deletedDate) {
+      notifyListeners({
+        type: "delete",
+        eventId: id,
+        eventDate: deletedDate,
+      });
+    }
   };
 
   // Get events for a specific date
@@ -201,6 +269,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({
         deleteEvent,
         getEventsByDate,
         getEventById,
+        addEventListener,
       }}
     >
       {children}

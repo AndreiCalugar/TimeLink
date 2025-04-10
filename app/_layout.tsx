@@ -71,8 +71,8 @@ export default function RootLayout() {
         <UserProvider>
           <ProfileProvider>
             <CalendarProvider>
-              <DiscoveryProvider>
-                <FriendsProvider>
+              <FriendsProvider>
+                <DiscoveryProvider>
                   <ToastProvider>
                     <ThemeProvider
                       value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
@@ -91,8 +91,8 @@ export default function RootLayout() {
                       <StatusBarManager />
                     </ThemeProvider>
                   </ToastProvider>
-                </FriendsProvider>
-              </DiscoveryProvider>
+                </DiscoveryProvider>
+              </FriendsProvider>
             </CalendarProvider>
           </ProfileProvider>
         </UserProvider>

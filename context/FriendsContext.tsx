@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useUser } from "./UserContext";
 import { useProfile } from "./ProfileContext";
 import { Friend } from "../types/profile";
-import { useDiscovery } from "./DiscoveryContext";
 
 // Extended Friend interface with additional properties
 export interface FriendExtended extends Friend {
@@ -57,7 +56,6 @@ export const FriendsProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { user } = useUser();
   const { friends: profileFriends } = useProfile();
-  const { events } = useDiscovery();
 
   const [friends, setFriends] = useState<FriendExtended[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
